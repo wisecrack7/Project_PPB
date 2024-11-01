@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "105703998110",
+    "project_id": "projectppb-b5afc",
+    "storage_bucket": "projectppb-b5afc.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:105703998110:android:199a66a3abe1c92841b18f",
+        "android_client_info": {
+          "package_name": "justquiz.ditto"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA89SteVBCt8KbxwZiSxl62wq4JMHMJEPk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:105703998110:android:71870b69d94d388d41b18f",
+        "android_client_info": {
+          "package_name": "project.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA89SteVBCt8KbxwZiSxl62wq4JMHMJEPk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
