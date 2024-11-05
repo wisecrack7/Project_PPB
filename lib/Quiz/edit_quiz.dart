@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 class EditQuizPage extends StatefulWidget {
   final String quizId;
@@ -21,17 +21,24 @@ class _EditQuizPageState extends State<EditQuizPage> {
   }
 
   Future<void> _fetchQuizData() async {
-    DocumentSnapshot doc = await FirebaseFirestore.instance.collection('quizzes').doc(widget.quizId).get();
+    DocumentSnapshot doc = await FirebaseFirestore.instance
+        .collection('quizzes')
+        .doc(widget.quizId)
+        .get();
     if (doc.exists) {
       final data = doc.data() as Map<String, dynamic>;
       _quizNameController.text = data['quizName'];
-      _questions.addAll(List<Map<String, dynamic>>.from(data['questions'] ?? []));
+      _questions
+          .addAll(List<Map<String, dynamic>>.from(data['questions'] ?? []));
       setState(() {});
     }
   }
 
   Future<void> _saveQuiz() async {
-    await FirebaseFirestore.instance.collection('quizzes').doc(widget.quizId).update({
+    await FirebaseFirestore.instance
+        .collection('quizzes')
+        .doc(widget.quizId)
+        .update({
       'quizName': _quizNameController.text,
       'questions': _questions,
     });
@@ -56,13 +63,14 @@ class _EditQuizPageState extends State<EditQuizPage> {
 
   void _addOption(int questionIndex) {
     setState(() {
-      _questions[questionIndex]['options'].add(''); // Add a new empty option
+      _questions[questionIndex]['options'].add('');
     });
   }
 
   void _removeOption(int questionIndex, int optionIndex) {
     setState(() {
-      _questions[questionIndex]['options'].removeAt(optionIndex); // Remove the specified option
+      _questions[questionIndex]['options']
+          .removeAt(optionIndex);
     });
   }
 
@@ -116,14 +124,15 @@ class _EditQuizPageState extends State<EditQuizPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextField(
-              decoration: InputDecoration(labelText: 'Question ${questionIndex + 1}'),
+              decoration:
+                  InputDecoration(labelText: 'Question ${questionIndex + 1}'),
               onChanged: (value) {
-                question['question'] = value; // Update the question text
+                question['question'] = value;
               },
               controller: TextEditingController(text: question['question']),
             ),
             const SizedBox(height: 10),
-            // Options
+
             for (int i = 0; i < question['options'].length; i++)
               Row(
                 children: [
@@ -131,33 +140,38 @@ class _EditQuizPageState extends State<EditQuizPage> {
                     child: TextField(
                       decoration: InputDecoration(labelText: 'Option ${i + 1}'),
                       onChanged: (value) {
-                        question['options'][i] = value; // Update the option text
+                        question['options'][i] =
+                            value;
                       },
-                      controller: TextEditingController(text: question['options'][i]),
+                      controller:
+                          TextEditingController(text: question['options'][i]),
                     ),
                   ),
                   IconButton(
                     icon: Icon(Icons.remove),
-                    onPressed: () => _removeOption(questionIndex, i), // Remove option
+                    onPressed: () =>
+                        _removeOption(questionIndex, i),
                   ),
                 ],
               ),
             ElevatedButton(
-              onPressed: () => _addOption(questionIndex), // Add option
+              onPressed: () => _addOption(questionIndex),
               child: Text('Add Option'),
             ),
-            // Dropdown for selecting the correct answer
+            // Dropdown untuk jawaban yang benar
             DropdownButtonFormField<int>(
               decoration: InputDecoration(labelText: 'Correct Answer'),
-              value: question['correctAnswerIndex'], // Get the current correct answer index
+              value: question['correctAnswerIndex'],
+
               onChanged: (int? newValue) {
                 setState(() {
-                  question['correctAnswerIndex'] = newValue; // Update the correct answer index
+                  question['correctAnswerIndex'] =
+                      newValue;
                 });
               },
               items: List.generate(
                 question['options'].length,
-                    (index) => DropdownMenuItem<int>(
+                (index) => DropdownMenuItem<int>(
                   value: index,
                   child: Text('Option ${index + 1}'),
                 ),

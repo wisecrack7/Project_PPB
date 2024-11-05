@@ -1,5 +1,7 @@
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Authentication
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'welcome.dart';
 
@@ -10,8 +12,8 @@ class RegisterView extends StatefulWidget {
 
 class _RegisterViewState extends State<RegisterView> {
   final TextEditingController emailController = TextEditingController();
-  final TextEditingController usernameController = TextEditingController(); // Username
-  final TextEditingController nameController = TextEditingController(); // Name
+  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   String? selectedRole;
 
@@ -131,33 +133,48 @@ class _RegisterViewState extends State<RegisterView> {
   Future<void> _register(BuildContext context) async {
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
-    final username = usernameController.text.trim(); // Get username
-    final name = nameController.text.trim(); // Get name
+    final username = usernameController.text.trim();
+    final name = nameController.text.trim();
 
-    if (email.isEmpty || password.isEmpty || selectedRole == null || username.isEmpty || name.isEmpty) {
-      _showErrorDialog(context, 'Please enter email, password, username, name, and select a role.');
+    if (email.isEmpty ||
+        password.isEmpty ||
+        selectedRole == null ||
+        username.isEmpty ||
+        name.isEmpty) {
+      _showErrorDialog(context,
+          'Please enter email, password, username, name, and select a role.');
       return;
     }
 
     try {
-      // Register the user with Firebase Authentication
-      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      // Register akun menggunakan Firebase Authentication
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
+      String uid = userCredential.user!.uid;
 
-      // Store user data in Firestore with Firebase Authentication UID as the document ID
-      await FirebaseFirestore.instance.collection('users').doc(userCredential.user?.uid).set({
+
+      String hashedPassword = _hashPassword(password);
+
+      // Menyimpan data ke Firestore Database
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'userID': uid,
         'email': email,
+        'password': hashedPassword,
         'role': selectedRole,
-        'username': username, // Store username
-        'name': name, // Store name
+        'username': username,
+        'name': name,
       });
 
       _showSuccessDialog(context, email);
     } catch (e) {
       _showErrorDialog(context, 'Registration failed: ${e.toString()}');
     }
+  }
+
+  String _hashPassword(String password) {
+    final bytes = utf8.encode(password);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
   }
 
   void _showErrorDialog(BuildContext context, String message) {

@@ -1,33 +1,42 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:project/Home Page/view_tracking_grade.dart'; // Ensure the import path is correct
 import 'package:project/main.dart';
 
-class AccountPage extends StatefulWidget {
+class AccountStudentPage extends StatefulWidget {
+  final String username;
+
+  //Menerima parameter username untuk mengambil data dari Firestore Database
+  AccountStudentPage({required this.username});
+
   @override
-  _AccountPageState createState() => _AccountPageState();
+  _AccountStudentPageState createState() => _AccountStudentPageState();
 }
 
-class _AccountPageState extends State<AccountPage> {
+class _AccountStudentPageState extends State<AccountStudentPage> {
+  //Default saat memuat data
   String name = "Loading...";
   String role = "Loading...";
 
+  //Mengambil data dari Firestore Database
   @override
   void initState() {
     super.initState();
     _fetchAccountData();
   }
 
+  //Mengambil data pengguna dari Firestore Database
   Future<void> _fetchAccountData() async {
+    //Mendapatkan UID pengguna yang sedang login pada aplikasi
     String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
-
 
     if (currentUserId.isEmpty) {
       _setDefaultValues();
       print("No user is currently logged in.");
       return;
     }
-
+    //Mengambil dokumen pengguna dari dataLogin
     try {
       DocumentSnapshot doc = await FirebaseFirestore.instance
           .collection('dataLogin')
@@ -62,16 +71,19 @@ class _AccountPageState extends State<AccountPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Center(
+          child: Text(
+            'Account Page',
+            style: TextStyle(fontSize: 20),
+          ),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Account Information',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 20),
             Text(
               'Name: $name',
               style: TextStyle(fontSize: 18),
@@ -82,7 +94,24 @@ class _AccountPageState extends State<AccountPage> {
               style: TextStyle(fontSize: 18),
             ),
             SizedBox(height: 20),
-
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        ViewTrackingGrade(username: widget.username),
+                  ),
+                );
+              },
+              child: Text('View Tracking Nilai'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
             Spacer(),
             ElevatedButton(
               onPressed: () {
@@ -108,7 +137,7 @@ class _AccountPageState extends State<AccountPage> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => MyApp()),
-          (Route<dynamic> route) => false,
+      (Route<dynamic> route) => false,
     );
   }
 }

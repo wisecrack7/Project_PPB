@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:project/Home Page/account.dart'; // Import the AccountPage
 import 'package:project/Quiz/create_quiz.dart';
 import 'package:project/Quiz/edit_quiz.dart';
-import 'package:project/Home Page/account.dart'; // Import the AccountPage
 
 class TeacherHomeView extends StatefulWidget {
   final String username;
@@ -14,10 +14,11 @@ class TeacherHomeView extends StatefulWidget {
 }
 
 class _TeacherHomeViewState extends State<TeacherHomeView> {
-  int _selectedIndex = 0; // To track the selected index
+  int _selectedIndex = 0;
 
   Future<List<Map<String, dynamic>>> _fetchQuizzes() async {
-    QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('quizzes').get();
+    QuerySnapshot snapshot =
+        await FirebaseFirestore.instance.collection('quizzes').get();
     List<Map<String, dynamic>> quizzes = snapshot.docs.map((doc) {
       return {
         'id': doc.id,
@@ -29,11 +30,14 @@ class _TeacherHomeViewState extends State<TeacherHomeView> {
 
   Future<void> _deleteQuiz(String quizId) async {
     try {
-      await FirebaseFirestore.instance.collection('quizzes').doc(quizId).delete();
+      await FirebaseFirestore.instance
+          .collection('quizzes')
+          .doc(quizId)
+          .delete();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Quiz deleted successfully!')),
       );
-      setState(() {}); // Trigger a rebuild to refresh the quiz list
+      setState(() {});
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error deleting quiz: $e')),
@@ -43,7 +47,7 @@ class _TeacherHomeViewState extends State<TeacherHomeView> {
 
   void _onItemTapped(int index) {
     setState(() {
-      _selectedIndex = index; // Update selected index
+      _selectedIndex = index;
     });
   }
 
@@ -54,8 +58,8 @@ class _TeacherHomeViewState extends State<TeacherHomeView> {
       body: _selectedIndex == 0
           ? _buildHomeContent()
           : _selectedIndex == 1
-          ? _buildCreateContent()
-          : AccountPage(), // Navigate to AccountPage when Account is selected
+              ? _buildCreateContent()
+              : AccountPage(),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -122,7 +126,8 @@ class _TeacherHomeViewState extends State<TeacherHomeView> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => EditQuizPage(quizId: quiz['id']),
+                                    builder: (context) =>
+                                        EditQuizPage(quizId: quiz['id']),
                                   ),
                                 );
                               },
@@ -135,7 +140,8 @@ class _TeacherHomeViewState extends State<TeacherHomeView> {
                                   builder: (context) {
                                     return AlertDialog(
                                       title: Text('Delete Quiz'),
-                                      content: Text('Are you sure you want to delete this quiz?'),
+                                      content: Text(
+                                          'Are you sure you want to delete this quiz?'),
                                       actions: [
                                         TextButton(
                                           onPressed: () {

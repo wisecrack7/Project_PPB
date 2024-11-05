@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:project/Home Page/student_home.dart';
+import 'package:project/Home Page/teacher_home.dart'; // Ensure this import is correct
 import 'package:project/Login and Register/register.dart';
-import 'package:project/Home Page/teacher_home.dart';
 
 class WelcomeScreen extends StatelessWidget {
   final TextEditingController usernameController = TextEditingController();
@@ -10,63 +11,54 @@ class WelcomeScreen extends StatelessWidget {
 
   Future<void> _login(BuildContext context) async {
     try {
-      // Retrieve users from Firestore where email or username matches
-      QuerySnapshot userQuery = await FirebaseFirestore.instance
+      final UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: usernameController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      // Mendapatkan detail user dari Firestore Database
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('users')
-          .where('email', isEqualTo: usernameController.text.trim())
-          .where('password', isEqualTo: passwordController.text.trim())
+          .doc(userCredential.user?.uid)
           .get();
 
-      // If no matches, try with username
-      if (userQuery.docs.isEmpty) {
-        userQuery = await FirebaseFirestore.instance
-            .collection('users')
-            .where('username', isEqualTo: usernameController.text.trim())
-            .where('password', isEqualTo: passwordController.text.trim())
-            .get();
-      }
+      if (userDoc.exists) {
+        //Menyimpan data user ke dataLogin
+        await _storeUserDataInDataLogin(userDoc, userDoc.id);
 
-      // Debug print
-      print('Username/Email: ${usernameController.text.trim()}');
-      print('Password: ${passwordController.text.trim()}');
-      print('Number of matching documents: ${userQuery.docs.length}');
+        final String role = userDoc['role']; // Assuming 'role' field exists
 
-      // Check if a matching user document exists
-      if (userQuery.docs.isNotEmpty) {
-        final userDoc = userQuery.docs.first;
-        final String role = userDoc['role'];
-        final String userId = userDoc.id; // Get the UserID
-
-        // Store user data in the dataLogin collection
-        await _storeUserDataInDataLogin(userDoc, userId);
-
-        // Navigate based on role
-        if (role.toLowerCase() == 'teacher') {
+        if (role == 'Teacher') {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-                builder: (context) =>
-                    TeacherHomeView(username: userDoc['username'])),
-          );
-        } else if (role.toLowerCase() == 'student') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => StudentHomePage()),
+              builder: (context) =>
+                  TeacherHomeView(username: userDoc['username']),
+            ),
           );
         } else {
-          _showErrorDialog(context, 'Invalid role.');
+          // Mengarahkan ke StudentHomePage
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  StudentHomePage(username: userDoc['username']),
+            ),
+          );
         }
       } else {
-        _showErrorDialog(context, 'Invalid email/username or password.');
+        _showErrorDialog(context, 'User not found in database.');
       }
     } catch (e) {
-      _showErrorDialog(context, 'An error occurred: ${e.toString()}');
+      _showErrorDialog(context, 'Terjadi kesalahan: ${e.toString()}');
     }
   }
 
-  Future<void> _storeUserDataInDataLogin(DocumentSnapshot userDoc, String userId) async {
+  Future<void> _storeUserDataInDataLogin(
+      DocumentSnapshot userDoc, String userId) async {
     try {
-      // Create a new document in dataLogin collection with UserID as the document ID
+      // Membuat dokument baru di dataLogin collection dengan userID
       await FirebaseFirestore.instance.collection('dataLogin').doc(userId).set({
         'currentId': userId,
         ...userDoc.data() as Map<String, dynamic>, // Include all user data

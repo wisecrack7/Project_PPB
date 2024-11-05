@@ -11,20 +11,21 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
   final _quizNameController = TextEditingController();
   List<Map<String, dynamic>> questions = [];
 
+  //Pembuatan pertanyaan atau Quiz
   void _addQuestion() {
     setState(() {
       questions.add({
-        'type': 'Multiple Choice', // Default to Multiple Choice
+        'type': 'Multiple Choice',
         'question': '',
         'options': [],
-        'correctAnswerIndex': null, // Store the index of the correct answer
+        'correctAnswerIndex': null,
       });
     });
   }
 
   void _addOption(int questionIndex) {
     setState(() {
-      questions[questionIndex]['options'].add(''); // Add an empty option
+      questions[questionIndex]['options'].add('');
     });
   }
 
@@ -35,25 +36,25 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
     for (var doc in snapshot.docs) {
       int quizId = (doc.data() as Map<String, dynamic>)['quizID'] ?? 0;
       if (quizId > maxId) {
-        maxId = quizId; // Find the maximum quizID
+        maxId = quizId;
       }
     }
 
-    return maxId + 1; // Return the next available quizID
+    return maxId + 1;
   }
 
   Future<void> _saveQuiz() async {
     if (_formKey.currentState?.validate() ?? false) {
-      // Get the next quiz ID
+
       int quizId = await _getNextQuizId();
 
       final quizData = {
-        'quizID': quizId, // Include the quiz ID
+        'quizID': quizId,
         'quizName': _quizNameController.text,
         'questions': questions,
       };
 
-      // Save to Firestore
+      // Menyimpan data ke Firestore Database
       await FirebaseFirestore.instance.collection('quizzes').doc(quizId.toString()).set(quizData);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Quiz saved successfully!')));
       _quizNameController.clear();
@@ -107,7 +108,7 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                                 questions[index]['question'] = value;
                               },
                             ),
-                            // Display multiple choice options
+                            //Menampilkan display option Jawaban
                             for (int i = 0; i < questions[index]['options'].length; i++)
                               Row(
                                 children: [
@@ -130,7 +131,7 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                                 ],
                               ),
                             ElevatedButton(
-                              onPressed: () => _addOption(index), // Add options correctly
+                              onPressed: () => _addOption(index),
                               child: Text('Add Option'),
                             ),
                             DropdownButtonFormField<int>(
@@ -138,7 +139,7 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                               value: questions[index]['correctAnswerIndex'],
                               onChanged: (int? newValue) {
                                 setState(() {
-                                  questions[index]['correctAnswerIndex'] = newValue; // Store the index
+                                  questions[index]['correctAnswerIndex'] = newValue;
                                 });
                               },
                               items: List.generate(

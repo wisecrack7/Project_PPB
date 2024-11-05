@@ -1,15 +1,18 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 class QuizViewPage extends StatefulWidget {
   final String quizId;
-  QuizViewPage({required this.quizId});
+  final String username;
+
+  QuizViewPage({required this.quizId, required this.username});
 
   @override
   _QuizViewPageState createState() => _QuizViewPageState();
 }
 
 class _QuizViewPageState extends State<QuizViewPage> {
+  //Menyimpan jawaban yang dipilih oleh Student ke Firestore Database
   Map<String, dynamic> answers = {};
 
   @override
@@ -18,23 +21,27 @@ class _QuizViewPageState extends State<QuizViewPage> {
       appBar: AppBar(
         title: Text('Quiz'),
       ),
+      //Melakukan pengambilan data quiz dari Firestore Database untuk ditampilkan dalam sesi quiz berdasarkan quiz yang dipilih
       body: FutureBuilder<DocumentSnapshot>(
-        future: FirebaseFirestore.instance.collection('quizzes').doc(widget.quizId).get(),
+        future: FirebaseFirestore.instance
+            .collection('quizzes')
+            .doc(widget.quizId)
+            .get(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return Center(child: CircularProgressIndicator());
           }
-
+          //Melakukan pengambilan data soal dan jawaban untuk disimpan ke Firestore Database
           final quizData = snapshot.data!.data() as Map<String, dynamic>?;
           final questions = quizData?['questions'] as List<dynamic>? ?? [];
 
+          //Menampilkan Pertanyaan dan Opsi Jawaban
           return ListView.builder(
             itemCount: questions.length,
             itemBuilder: (context, index) {
               final question = questions[index];
               final questionText = question['question'] ?? 'No question text';
               final options = question['options'] as List<dynamic>? ?? [];
-
               return Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Column(
@@ -42,7 +49,8 @@ class _QuizViewPageState extends State<QuizViewPage> {
                   children: [
                     Text(
                       'Q${index + 1}: $questionText',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     ...options.map((option) {
                       return RadioListTile<String>(
@@ -63,6 +71,7 @@ class _QuizViewPageState extends State<QuizViewPage> {
           );
         },
       ),
+      //Tombol Submit untuk menyimpan data ke Firestore Database
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(8.0),
         child: ElevatedButton(
@@ -75,8 +84,12 @@ class _QuizViewPageState extends State<QuizViewPage> {
     );
   }
 
+  //Menyimpan Quiz dan Menghitung Score
   void _submitQuiz() async {
-    final quizDoc = await FirebaseFirestore.instance.collection('quizzes').doc(widget.quizId).get();
+    final quizDoc = await FirebaseFirestore.instance
+        .collection('quizzes')
+        .doc(widget.quizId)
+        .get();
     final quizData = quizDoc.data() as Map<String, dynamic>?;
     final questions = quizData?['questions'] as List<dynamic>? ?? [];
 
@@ -88,24 +101,22 @@ class _QuizViewPageState extends State<QuizViewPage> {
       final correctAnswerIndex = question['correctAnswerIndex'];
       final correctAnswer = question['options'][correctAnswerIndex];
 
-      // Check if student's answer is correct
       if (answers[questionText] == correctAnswer) {
         correctAnswersCount++;
       }
     }
 
-    // Calculate the score as a percentage
     final score = (correctAnswersCount / totalQuestions) * 100;
 
-    // Save the submission to Firestore
+    //Memasukan data kepada Firestore Database pada collection submissions
     await FirebaseFirestore.instance.collection('submissions').add({
       'quizId': widget.quizId,
       'studentAnswers': answers,
       'score': score,
       'timestamp': FieldValue.serverTimestamp(),
+      'username': widget.username,
     });
 
-    // Show feedback to the student
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -115,7 +126,8 @@ class _QuizViewPageState extends State<QuizViewPage> {
           TextButton(
             onPressed: () {
               Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Return to previous screen
+              Navigator.popUntil(context,
+                  (route) => route.isFirst); // Return to StudentHomePage
             },
             child: Text('OK'),
           ),

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:project/Home Page/account.dart';
-import 'package:project/Login and Register/welcome.dart';
+import 'package:project/Login and Register/welcome.dart'; // Import only WelcomeScreen
 
+//Penggunaan Firebase untuk melakukan login
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -21,10 +21,10 @@ class MyApp extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.active) {
             User? user = snapshot.data;
-            return user != null ? AccountPage() : WelcomeScreen();
+            // Pengarahan untuk langsung ke WelcomeScreen jika sudah terautentikasi
+            return user == null ? WelcomeScreen() : WelcomeScreen(); // Modify this line if needed
           }
           return Center(child: CircularProgressIndicator());
-
         },
       ),
     );
