@@ -8,7 +8,6 @@ class StudentHomePage extends StatefulWidget {
 
   StudentHomePage({required this.username});
 
-  //Menerima parameter username untuk mengambil data dari Firestore Database
   @override
   _StudentHomePageState createState() => _StudentHomePageState();
 }
@@ -23,57 +22,63 @@ class _StudentHomePageState extends State<StudentHomePage> {
         title: Text('Student Home'),
       ),
       body: _currentIndex == 0
-          ? StreamBuilder(
-              stream:
-                  FirebaseFirestore.instance.collection('quizzes').snapshots(),
-              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                if (!snapshot.hasData) {
+          ? FutureBuilder<List<String>>(
+              future: _fetchCompletedQuizzes(widget.username),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
                 }
 
-                return ListView(
-                  children: snapshot.data!.docs.map((document) {
-                    final quizName = document['quizName'] ?? 'Unnamed Quiz';
+                if (snapshot.hasError) {
+                  return Center(
+                      child: Text('Error fetching completed quizzes'));
+                }
 
-                    //Pengecekan hasil submit ke Firestore Database
-                    bool isSubmitted = false;
+                List<String> completedQuizzes = snapshot.data ?? [];
 
+                return StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('quizzes')
+                      .snapshots(),
+                  builder: (context, quizSnapshot) {
+                    if (!quizSnapshot.hasData) {
+                      return Center(child: CircularProgressIndicator());
+                    }
 
-                    FirebaseFirestore.instance
-                        .collection('submissions')
-                        .where('username', isEqualTo: widget.username)
-                        .where('quizId', isEqualTo: document.id)
-                        .get()
-                        .then((value) {
-                      if (value.docs.isNotEmpty) {
-                        isSubmitted = true;
-                      }
-                    });
+                    final quizzes = quizSnapshot.data!.docs;
 
-                    if (isSubmitted)
-                      return Container(); // Skip submitted quizzes
+                    return ListView(
+                      children: quizzes.map((document) {
+                        final quizName = document['quizName'] ?? 'Unnamed Quiz';
+                        final quizId = document.id;
 
-                    return ListTile(
-                      title: Text(quizName),
-                      trailing: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => QuizViewPage(
-                                quizId: document.id,
-                                username: widget.username,
-                              ),
-                            ),
-                          ).then((_) {
-                            setState(
-                                () {}); // Refresh after returning from quiz
-                          });
-                        },
-                        child: Text('Take Quiz'),
-                      ),
+                        // Skip quizzes that have already been completed
+                        if (completedQuizzes.contains(quizId)) {
+                          return Container();
+                        }
+
+                        return ListTile(
+                          title: Text(quizName),
+                          trailing: ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => QuizViewPage(
+                                    quizId: quizId,
+                                    username: widget.username,
+                                  ),
+                                ),
+                              ).then((_) {
+                                setState(() {});
+                              });
+                            },
+                            child: Text('Take Quiz'),
+                          ),
+                        );
+                      }).toList(),
                     );
-                  }).toList(),
+                  },
                 );
               },
             )
@@ -97,5 +102,23 @@ class _StudentHomePageState extends State<StudentHomePage> {
         },
       ),
     );
+  }
+
+  Future<List<String>> _fetchCompletedQuizzes(String username) async {
+    try {
+      QuerySnapshot submissions = await FirebaseFirestore.instance
+          .collection('submissions')
+          .where('username', isEqualTo: username)
+          .get();
+
+      // Ekstrak Quiz dari ID pada submissions
+      List<String> completedQuizzes =
+          submissions.docs.map((doc) => doc['quizId'] as String).toList();
+
+      return completedQuizzes;
+    } catch (e) {
+      print('Error fetching completed quizzes: $e');
+      return [];
+    }
   }
 }

@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 class CreateQuizPage extends StatefulWidget {
   @override
@@ -9,9 +9,9 @@ class CreateQuizPage extends StatefulWidget {
 class _CreateQuizPageState extends State<CreateQuizPage> {
   final _formKey = GlobalKey<FormState>();
   final _quizNameController = TextEditingController();
+  final _timerController = TextEditingController();
   List<Map<String, dynamic>> questions = [];
 
-  //Pembuatan pertanyaan atau Quiz
   void _addQuestion() {
     setState(() {
       questions.add({
@@ -30,7 +30,8 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
   }
 
   Future<int> _getNextQuizId() async {
-    QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('quizzes').get();
+    QuerySnapshot snapshot =
+        await FirebaseFirestore.instance.collection('quizzes').get();
     int maxId = 0;
 
     for (var doc in snapshot.docs) {
@@ -45,19 +46,24 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
 
   Future<void> _saveQuiz() async {
     if (_formKey.currentState?.validate() ?? false) {
-
       int quizId = await _getNextQuizId();
+      final int timerDuration = int.tryParse(_timerController.text) ?? 0;
 
       final quizData = {
         'quizID': quizId,
         'quizName': _quizNameController.text,
+        'timerDuration': timerDuration, //Menyimpan durasi timer
         'questions': questions,
       };
 
-      // Menyimpan data ke Firestore Database
-      await FirebaseFirestore.instance.collection('quizzes').doc(quizId.toString()).set(quizData);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Quiz saved successfully!')));
+      await FirebaseFirestore.instance
+          .collection('quizzes')
+          .doc(quizId.toString())
+          .set(quizData);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Quiz saved successfully!')));
       _quizNameController.clear();
+      _timerController.clear();
       setState(() {
         questions.clear();
       });
@@ -84,6 +90,20 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                   return null;
                 },
               ),
+              TextFormField(
+                controller: _timerController,
+                decoration:
+                    InputDecoration(labelText: 'Timer Duration (in seconds)'),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null ||
+                      value.isEmpty ||
+                      int.tryParse(value) == null) {
+                    return 'Please enter a valid timer duration';
+                  }
+                  return null;
+                },
+              ),
               SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _addQuestion,
@@ -103,18 +123,21 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                           children: [
                             Text('Question Type: ${questions[index]['type']}'),
                             TextFormField(
-                              decoration: InputDecoration(labelText: 'Question'),
+                              decoration:
+                                  InputDecoration(labelText: 'Question'),
                               onChanged: (value) {
                                 questions[index]['question'] = value;
                               },
                             ),
-                            //Menampilkan display option Jawaban
-                            for (int i = 0; i < questions[index]['options'].length; i++)
+                            for (int i = 0;
+                                i < questions[index]['options'].length;
+                                i++)
                               Row(
                                 children: [
                                   Expanded(
                                     child: TextFormField(
-                                      decoration: InputDecoration(labelText: 'Option ${i + 1}'),
+                                      decoration: InputDecoration(
+                                          labelText: 'Option ${i + 1}'),
                                       onChanged: (value) {
                                         questions[index]['options'][i] = value;
                                       },
@@ -135,16 +158,18 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                               child: Text('Add Option'),
                             ),
                             DropdownButtonFormField<int>(
-                              decoration: InputDecoration(labelText: 'Select Correct Answer'),
+                              decoration: InputDecoration(
+                                  labelText: 'Select Correct Answer'),
                               value: questions[index]['correctAnswerIndex'],
                               onChanged: (int? newValue) {
                                 setState(() {
-                                  questions[index]['correctAnswerIndex'] = newValue;
+                                  questions[index]['correctAnswerIndex'] =
+                                      newValue;
                                 });
                               },
                               items: List.generate(
                                 questions[index]['options'].length,
-                                    (i) => DropdownMenuItem<int>(
+                                (i) => DropdownMenuItem<int>(
                                   value: i,
                                   child: Text('Option ${i + 1}'),
                                 ),

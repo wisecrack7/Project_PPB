@@ -1,5 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EditQuizPage extends StatefulWidget {
   final String quizId;
@@ -12,7 +12,8 @@ class EditQuizPage extends StatefulWidget {
 
 class _EditQuizPageState extends State<EditQuizPage> {
   final TextEditingController _quizNameController = TextEditingController();
-  final List<Map<String, dynamic>> _questions = [];
+  final TextEditingController _timerController = TextEditingController();
+  List<Map<String, dynamic>> _questions = [];
 
   @override
   void initState() {
@@ -28,8 +29,8 @@ class _EditQuizPageState extends State<EditQuizPage> {
     if (doc.exists) {
       final data = doc.data() as Map<String, dynamic>;
       _quizNameController.text = data['quizName'];
-      _questions
-          .addAll(List<Map<String, dynamic>>.from(data['questions'] ?? []));
+      _timerController.text = (data['timerDuration'] ?? '').toString();
+      _questions = List<Map<String, dynamic>>.from(data['questions'] ?? []);
       setState(() {});
     }
   }
@@ -40,6 +41,7 @@ class _EditQuizPageState extends State<EditQuizPage> {
         .doc(widget.quizId)
         .update({
       'quizName': _quizNameController.text,
+      'timerDuration': int.tryParse(_timerController.text) ?? 0,
       'questions': _questions,
     });
     _showSuccessDialog();
@@ -59,19 +61,6 @@ class _EditQuizPageState extends State<EditQuizPage> {
         ],
       ),
     );
-  }
-
-  void _addOption(int questionIndex) {
-    setState(() {
-      _questions[questionIndex]['options'].add('');
-    });
-  }
-
-  void _removeOption(int questionIndex, int optionIndex) {
-    setState(() {
-      _questions[questionIndex]['options']
-          .removeAt(optionIndex);
-    });
   }
 
   @override
@@ -94,6 +83,11 @@ class _EditQuizPageState extends State<EditQuizPage> {
               controller: _quizNameController,
               decoration: InputDecoration(labelText: 'Quiz Name'),
             ),
+            TextField(
+              controller: _timerController,
+              decoration: InputDecoration(labelText: 'Timer Duration (in seconds)'),
+              keyboardType: TextInputType.number,
+            ),
             const SizedBox(height: 20),
             Expanded(
               child: ListView.builder(
@@ -115,72 +109,73 @@ class _EditQuizPageState extends State<EditQuizPage> {
 
   Widget _buildQuestionForm(int questionIndex) {
     final question = _questions[questionIndex];
-
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text('Question ${questionIndex + 1}'),
             TextField(
-              decoration:
-                  InputDecoration(labelText: 'Question ${questionIndex + 1}'),
+              decoration: InputDecoration(labelText: 'Question Text'),
               onChanged: (value) {
-                question['question'] = value;
+                setState(() {
+                  _questions[questionIndex]['question'] = value;
+                });
               },
               controller: TextEditingController(text: question['question']),
             ),
             const SizedBox(height: 10),
-
-            for (int i = 0; i < question['options'].length; i++)
+            for (int i = 0; i < (question['options']?.length ?? 0); i++)
               Row(
                 children: [
                   Expanded(
                     child: TextField(
                       decoration: InputDecoration(labelText: 'Option ${i + 1}'),
                       onChanged: (value) {
-                        question['options'][i] =
-                            value;
+                        setState(() {
+                          _questions[questionIndex]['options'][i] = value;
+                        });
                       },
-                      controller:
-                          TextEditingController(text: question['options'][i]),
+                      controller: TextEditingController(text: question['options'][i]),
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.remove),
-                    onPressed: () =>
-                        _removeOption(questionIndex, i),
+                    icon: const Icon(Icons.remove_circle_outline),
+                    onPressed: () {
+                      setState(() {
+                        _questions[questionIndex]['options'].removeAt(i);
+                      });
+                    },
                   ),
                 ],
               ),
             ElevatedButton(
-              onPressed: () => _addOption(questionIndex),
-              child: Text('Add Option'),
-            ),
-            // Dropdown untuk jawaban yang benar
-            DropdownButtonFormField<int>(
-              decoration: InputDecoration(labelText: 'Correct Answer'),
-              value: question['correctAnswerIndex'],
-
-              onChanged: (int? newValue) {
+              onPressed: () {
                 setState(() {
-                  question['correctAnswerIndex'] =
-                      newValue;
+                  _questions[questionIndex]['options'] = [
+                    ..._questions[questionIndex]['options'] ?? [],
+                    ''
+                  ];
                 });
               },
+              child: const Text('Add Option'),
+            ),
+            DropdownButtonFormField<int>(
+              decoration: InputDecoration(labelText: 'Correct Answer Index'),
+              value: question['correctAnswerIndex'],
               items: List.generate(
                 question['options'].length,
-                (index) => DropdownMenuItem<int>(
-                  value: index,
-                  child: Text('Option ${index + 1}'),
+                    (i) => DropdownMenuItem(
+                  value: i,
+                  child: Text('Option ${i + 1}'),
                 ),
               ),
-              validator: (value) {
-                if (value == null) {
-                  return 'Please select a correct answer';
-                }
-                return null;
+              onChanged: (value) {
+                setState(() {
+                  _questions[questionIndex]['correctAnswerIndex'] = value;
+                });
               },
             ),
           ],

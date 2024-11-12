@@ -27,7 +27,7 @@ class WelcomeScreen extends StatelessWidget {
         //Menyimpan data user ke dataLogin
         await _storeUserDataInDataLogin(userDoc, userDoc.id);
 
-        final String role = userDoc['role']; // Assuming 'role' field exists
+        final String role = userDoc['role'];
 
         if (role == 'Teacher') {
           Navigator.pushReplacement(
@@ -61,7 +61,7 @@ class WelcomeScreen extends StatelessWidget {
       // Membuat dokument baru di dataLogin collection dengan userID
       await FirebaseFirestore.instance.collection('dataLogin').doc(userId).set({
         'currentId': userId,
-        ...userDoc.data() as Map<String, dynamic>, // Include all user data
+        ...userDoc.data() as Map<String, dynamic>,
       });
       print('User data stored in dataLogin successfully.');
     } catch (e) {
@@ -124,7 +124,7 @@ class WelcomeScreen extends StatelessWidget {
                       TextField(
                         controller: usernameController,
                         decoration: InputDecoration(
-                          labelText: 'Email or Username',
+                          labelText: 'Email',
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.person),
                         ),
