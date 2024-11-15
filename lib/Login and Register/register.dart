@@ -31,7 +31,7 @@ class _RegisterViewState extends State<RegisterView> {
               child: Center(
                 child: ClipOval(
                   child: Image.asset(
-                    'lib/assets/bg2.jpeg',
+                    'lib/assets/JustQuiz.jpeg',
                     width: 300,
                     height: 300,
                     fit: BoxFit.cover,
