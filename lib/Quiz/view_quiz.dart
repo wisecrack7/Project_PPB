@@ -18,6 +18,10 @@ class _QuizViewPageState extends State<QuizViewPage> {
   late Timer _timer;
   int _remainingTime = 0;
 
+  final int questionsPerPage = 5;
+  int currentPage = 0;
+  List<dynamic> questions = [];
+
   @override
   void initState() {
     super.initState();
@@ -37,13 +41,17 @@ class _QuizViewPageState extends State<QuizViewPage> {
     } else {
       print("Durasi waktu tidak ditemukan atau data quiz kosong.");
     }
+
+    setState(() {
+      questions = quizData?['questions'] as List<dynamic>? ?? [];
+    });
   }
 
   void _startTimer() {
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       if (_remainingTime <= 0) {
         _timer.cancel();
-        _submitQuiz(); //otomatis submit ketika waktu habis
+        _submitQuiz(); // otomatis submit ketika waktu habis
       } else {
         setState(() {
           _remainingTime--;
@@ -64,8 +72,17 @@ class _QuizViewPageState extends State<QuizViewPage> {
     super.dispose();
   }
 
+  List<dynamic> _getPaginatedQuestions() {
+    final startIndex = currentPage * questionsPerPage;
+    final endIndex =
+    (startIndex + questionsPerPage).clamp(0, questions.length);
+    return questions.sublist(startIndex, endIndex);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final paginatedQuestions = _getPaginatedQuestions();
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Quiz'),
@@ -75,83 +92,110 @@ class _QuizViewPageState extends State<QuizViewPage> {
             child: Center(
               child: Text(
                 'Time: ${_formatTime(_remainingTime)}',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: _remainingTime <= 30 ? Colors.red : Colors.black, // Timer berubah jadi merah jika waktu <= 30 detik
+                ),
               ),
             ),
           ),
         ],
       ),
-      body: FutureBuilder<DocumentSnapshot>(
-        future: FirebaseFirestore.instance
-            .collection('quizzes')
-            .doc(widget.quizId)
-            .get(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return Center(child: CircularProgressIndicator());
-          }
-          final quizData = snapshot.data!.data() as Map<String, dynamic>?;
-          final questions = quizData?['questions'] as List<dynamic>? ?? [];
-
-          return ListView.builder(
-            itemCount: questions.length,
-            itemBuilder: (context, index) {
-              final question = questions[index];
-              final questionText =
-                  question['question'] ?? 'Pertanyaan tidak tersedia';
-              final options = question['options'] as List<dynamic>? ?? [];
-              return Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Q${index + 1}: $questionText',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      body: questions.isEmpty
+          ? Center(child: CircularProgressIndicator())
+          : ListView.builder(
+        itemCount: paginatedQuestions.length,
+        itemBuilder: (context, index) {
+          final question = paginatedQuestions[index];
+          final questionText =
+              question['question'] ?? 'Pertanyaan tidak tersedia';
+          final options = question['options'] as List<dynamic>? ?? [];
+          return Card(
+            elevation: 3,
+            margin: const EdgeInsets.symmetric(
+                vertical: 8.0, horizontal: 16.0),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Q${currentPage * questionsPerPage + index + 1}: $questionText',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blueAccent,
                     ),
-                    ...options.map((option) {
-                      return RadioListTile<String>(
-                        title: Text(option ?? 'Opsi tidak tersedia'),
-                        value: option ?? '',
-                        groupValue: answers[questionText],
-                        onChanged: (value) {
-                          setState(() {
-                            answers[questionText] = value;
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ],
-                ),
-              );
-            },
+                  ),
+                  const SizedBox(height: 10),
+                  ...options.map((option) {
+                    return RadioListTile<String>(
+                      title: Text(
+                        option ?? 'Opsi tidak tersedia',
+                        style: TextStyle(
+                          fontSize: 16,
+                        ),
+                      ),
+                      value: option ?? '',
+                      groupValue: answers[questionText],
+                      activeColor: Colors.green,
+                      onChanged: (value) {
+                        setState(() {
+                          answers[questionText] = value;
+                        });
+                      },
+                    );
+                  }).toList(),
+                ],
+              ),
+            ),
           );
         },
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: ElevatedButton(
-          onPressed: () {
-            _timer.cancel(); // Menghentikan timer saat melakukan submit
-            _submitQuiz();
-          },
-          child: Text('Submit'),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            if (currentPage > 0)
+              ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    currentPage--;
+                  });
+                },
+                icon: Icon(Icons.arrow_back),
+                label: Text('Back'),
+              ),
+            if ((currentPage + 1) * questionsPerPage < questions.length)
+              ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    currentPage++;
+                  });
+                },
+                icon: Icon(Icons.arrow_forward),
+                label: Text('Next'),
+              ),
+            if ((currentPage + 1) * questionsPerPage >= questions.length)
+              ElevatedButton.icon(
+                onPressed: () {
+                  _timer.cancel(); // Menghentikan timer saat melakukan submit
+                  _submitQuiz();
+                },
+                icon: Icon(Icons.check),
+                label: Text('Submit'),
+              ),
+          ],
         ),
       ),
     );
   }
 
   void _submitQuiz() async {
-    final quizDoc = await FirebaseFirestore.instance
-        .collection('quizzes')
-        .doc(widget.quizId)
-        .get();
-    final quizData = quizDoc.data() as Map<String, dynamic>?;
-    final questions = quizData?['questions'] as List<dynamic>? ?? [];
-
+    final totalQuestions = questions.length;
     int correctAnswersCount = 0;
-    int totalQuestions = questions.length;
 
     for (var question in questions) {
       final questionText = question['question'];

@@ -31,7 +31,7 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
 
   Future<int> _getNextQuizId() async {
     QuerySnapshot snapshot =
-        await FirebaseFirestore.instance.collection('quizzes').get();
+    await FirebaseFirestore.instance.collection('quizzes').get();
     int maxId = 0;
 
     for (var doc in snapshot.docs) {
@@ -93,7 +93,7 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
               TextFormField(
                 controller: _timerController,
                 decoration:
-                    InputDecoration(labelText: 'Timer Duration (in seconds)'),
+                InputDecoration(labelText: 'Timer Duration (in seconds)'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null ||
@@ -123,19 +123,22 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                           children: [
                             Text('Question Type: ${questions[index]['type']}'),
                             TextFormField(
+                              initialValue: questions[index]['question'],
                               decoration:
-                                  InputDecoration(labelText: 'Question'),
+                              InputDecoration(labelText: 'Question'),
                               onChanged: (value) {
                                 questions[index]['question'] = value;
                               },
                             ),
                             for (int i = 0;
-                                i < questions[index]['options'].length;
-                                i++)
+                            i < questions[index]['options'].length;
+                            i++)
                               Row(
                                 children: [
                                   Expanded(
                                     child: TextFormField(
+                                      initialValue:
+                                      questions[index]['options'][i],
                                       decoration: InputDecoration(
                                           labelText: 'Option ${i + 1}'),
                                       onChanged: (value) {
@@ -169,7 +172,7 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                               },
                               items: List.generate(
                                 questions[index]['options'].length,
-                                (i) => DropdownMenuItem<int>(
+                                    (i) => DropdownMenuItem<int>(
                                   value: i,
                                   child: Text('Option ${i + 1}'),
                                 ),
