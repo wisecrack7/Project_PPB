@@ -52,7 +52,7 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
       final quizData = {
         'quizID': quizId,
         'quizName': _quizNameController.text,
-        'timerDuration': timerDuration, //Menyimpan durasi timer
+        'timerDuration': timerDuration,
         'questions': questions,
       };
 
@@ -60,8 +60,10 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
           .collection('quizzes')
           .doc(quizId.toString())
           .set(quizData);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Quiz saved successfully!')));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Quiz saved successfully!')),
+      );
       _quizNameController.clear();
       _timerController.clear();
       setState(() {
@@ -78,76 +80,96 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _quizNameController,
-                decoration: InputDecoration(labelText: 'Quiz Name'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter quiz name';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _timerController,
-                decoration:
-                InputDecoration(labelText: 'Timer Duration (in seconds)'),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null ||
-                      value.isEmpty ||
-                      int.tryParse(value) == null) {
-                    return 'Please enter a valid timer duration';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _addQuestion,
-                child: Text('Add Question'),
-              ),
-              SizedBox(height: 16),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: questions.length,
-                  itemBuilder: (context, index) {
-                    return Card(
-                      margin: EdgeInsets.symmetric(vertical: 4),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Question Type: ${questions[index]['type']}'),
-                            TextFormField(
-                              initialValue: questions[index]['question'],
-                              decoration:
-                              InputDecoration(labelText: 'Question'),
-                              onChanged: (value) {
-                                questions[index]['question'] = value;
-                              },
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextFormField(
+                  controller: _quizNameController,
+                  decoration: InputDecoration(
+                    labelText: 'Quiz Name',
+                    border: OutlineInputBorder(),
+                    helperText: 'Enter the name of the quiz.',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter quiz name';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 16),
+                TextFormField(
+                  controller: _timerController,
+                  decoration: InputDecoration(
+                    labelText: 'Timer Duration (in seconds)',
+                    border: OutlineInputBorder(),
+                    helperText: 'Enter the timer duration for the quiz.',
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null ||
+                        value.isEmpty ||
+                        int.tryParse(value) == null) {
+                      return 'Please enter a valid timer duration';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 24),
+                Text(
+                  'Questions',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                SizedBox(height: 8),
+                for (int index = 0; index < questions.length; index++)
+                  Card(
+                    elevation: 3,
+                    margin: EdgeInsets.symmetric(vertical: 8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextFormField(
+                            initialValue: questions[index]['question'],
+                            decoration: InputDecoration(
+                              labelText: 'Question ${index + 1}',
+                              border: OutlineInputBorder(),
                             ),
-                            for (int i = 0;
-                            i < questions[index]['options'].length;
-                            i++)
-                              Row(
+                            onChanged: (value) {
+                              questions[index]['question'] = value;
+                            },
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Options',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 8),
+                          for (int i = 0;
+                          i < questions[index]['options'].length;
+                          i++)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: Row(
                                 children: [
                                   Expanded(
                                     child: TextFormField(
                                       initialValue:
                                       questions[index]['options'][i],
                                       decoration: InputDecoration(
-                                          labelText: 'Option ${i + 1}'),
+                                        labelText: 'Option ${i + 1}',
+                                        border: OutlineInputBorder(),
+                                      ),
                                       onChanged: (value) {
                                         questions[index]['options'][i] = value;
                                       },
                                     ),
                                   ),
                                   IconButton(
-                                    icon: Icon(Icons.remove),
+                                    icon: Icon(Icons.remove_circle,
+                                        color: Colors.red),
                                     onPressed: () {
                                       setState(() {
                                         questions[index]['options'].removeAt(i);
@@ -156,46 +178,56 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                                   ),
                                 ],
                               ),
-                            ElevatedButton(
-                              onPressed: () => _addOption(index),
-                              child: Text('Add Option'),
                             ),
-                            DropdownButtonFormField<int>(
-                              decoration: InputDecoration(
-                                  labelText: 'Select Correct Answer'),
-                              value: questions[index]['correctAnswerIndex'],
-                              onChanged: (int? newValue) {
-                                setState(() {
-                                  questions[index]['correctAnswerIndex'] =
-                                      newValue;
-                                });
-                              },
-                              items: List.generate(
-                                questions[index]['options'].length,
-                                    (i) => DropdownMenuItem<int>(
-                                  value: i,
-                                  child: Text('Option ${i + 1}'),
-                                ),
+                          ElevatedButton.icon(
+                            onPressed: () => _addOption(index),
+                            icon: Icon(Icons.add),
+                            label: Text('Add Option'),
+                          ),
+                          DropdownButtonFormField<int>(
+                            decoration: InputDecoration(
+                              labelText: 'Correct Answer',
+                              border: OutlineInputBorder(),
+                            ),
+                            value: questions[index]['correctAnswerIndex'],
+                            onChanged: (int? newValue) {
+                              setState(() {
+                                questions[index]['correctAnswerIndex'] =
+                                    newValue;
+                              });
+                            },
+                            items: List.generate(
+                              questions[index]['options'].length,
+                                  (i) => DropdownMenuItem<int>(
+                                value: i,
+                                child: Text('Option ${i + 1}'),
                               ),
-                              validator: (value) {
-                                if (value == null) {
-                                  return 'Please select a correct answer';
-                                }
-                                return null;
-                              },
                             ),
-                          ],
-                        ),
+                            validator: (value) {
+                              if (value == null) {
+                                return 'Please select a correct answer';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
                       ),
-                    );
-                  },
+                    ),
+                  ),
+                SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: _addQuestion,
+                  icon: Icon(Icons.add_circle),
+                  label: Text('Add Question'),
                 ),
-              ),
-              ElevatedButton(
-                onPressed: _saveQuiz,
-                child: Text('Save Quiz'),
-              ),
-            ],
+                SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: _saveQuiz,
+                  icon: Icon(Icons.save),
+                  label: Text('Save Quiz'),
+                ),
+              ],
+            ),
           ),
         ),
       ),

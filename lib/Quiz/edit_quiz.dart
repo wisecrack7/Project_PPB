@@ -63,6 +63,16 @@ class _EditQuizPageState extends State<EditQuizPage> {
     );
   }
 
+  void _addQuestion() {
+    setState(() {
+      _questions.add({
+        'question': '',
+        'options': ['', '', '', ''], // Default 4 options
+        'correctAnswerIndex': null,
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,14 +89,28 @@ class _EditQuizPageState extends State<EditQuizPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            TextField(
+            TextFormField(
               controller: _quizNameController,
-              decoration: InputDecoration(labelText: 'Quiz Name'),
+              decoration: InputDecoration(
+                labelText: 'Quiz Name',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+              ),
             ),
-            TextField(
+            const SizedBox(height: 16),
+            TextFormField(
               controller: _timerController,
-              decoration: InputDecoration(labelText: 'Timer Duration (in seconds)'),
+              decoration: InputDecoration(
+                labelText: 'Timer Duration (in seconds)',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+              ),
               keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _addQuestion,
+              child: const Text('Add Question'),
             ),
             const SizedBox(height: 20),
             Expanded(
@@ -97,6 +121,7 @@ class _EditQuizPageState extends State<EditQuizPage> {
                 },
               ),
             ),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _saveQuiz,
               child: const Text('Save Changes'),
@@ -112,13 +137,21 @@ class _EditQuizPageState extends State<EditQuizPage> {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Question ${questionIndex + 1}'),
-            TextField(
-              decoration: InputDecoration(labelText: 'Question Text'),
+            Text(
+              'Question ${questionIndex + 1}',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              decoration: InputDecoration(
+                labelText: 'Question Text',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+              ),
               onChanged: (value) {
                 setState(() {
                   _questions[questionIndex]['question'] = value;
@@ -128,28 +161,35 @@ class _EditQuizPageState extends State<EditQuizPage> {
             ),
             const SizedBox(height: 10),
             for (int i = 0; i < (question['options']?.length ?? 0); i++)
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(labelText: 'Option ${i + 1}'),
-                      onChanged: (value) {
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        decoration: InputDecoration(
+                          labelText: 'Option ${i + 1}',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _questions[questionIndex]['options'][i] = value;
+                          });
+                        },
+                        controller: TextEditingController(text: question['options'][i]),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle_outline),
+                      onPressed: () {
                         setState(() {
-                          _questions[questionIndex]['options'][i] = value;
+                          _questions[questionIndex]['options'].removeAt(i);
                         });
                       },
-                      controller: TextEditingController(text: question['options'][i]),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.remove_circle_outline),
-                    onPressed: () {
-                      setState(() {
-                        _questions[questionIndex]['options'].removeAt(i);
-                      });
-                    },
-                  ),
-                ],
+                  ],
+                ),
               ),
             ElevatedButton(
               onPressed: () {
@@ -162,8 +202,12 @@ class _EditQuizPageState extends State<EditQuizPage> {
               },
               child: const Text('Add Option'),
             ),
+            const SizedBox(height: 10),
             DropdownButtonFormField<int>(
-              decoration: InputDecoration(labelText: 'Correct Answer Index'),
+              decoration: InputDecoration(
+                labelText: 'Correct Answer Index',
+                border: OutlineInputBorder(),
+              ),
               value: question['correctAnswerIndex'],
               items: List.generate(
                 question['options'].length,
