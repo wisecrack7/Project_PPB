@@ -102,7 +102,7 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                 TextFormField(
                   controller: _timerController,
                   decoration: InputDecoration(
-                    labelText: 'Timer Duration (in seconds)',
+                    labelText: 'Timer Duration (in minutes)',
                     border: OutlineInputBorder(),
                     helperText: 'Enter the timer duration for the quiz.',
                   ),

@@ -85,6 +85,7 @@ class _QuizViewPageState extends State<QuizViewPage> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false, // Menghilangkan tombol back
         title: Text('Quiz'),
         actions: [
           Padding(

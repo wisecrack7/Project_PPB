@@ -19,69 +19,155 @@ class _StudentHomePageState extends State<StudentHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Student Home'),
+        title: Text('Student Dashboard'),
+        backgroundColor: Colors.blueAccent,
+        elevation: 4.0,
       ),
       body: _currentIndex == 0
           ? FutureBuilder<List<String>>(
-              future: _fetchCompletedQuizzes(widget.username),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                }
+        future: _fetchCompletedQuizzes(widget.username),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
 
-                if (snapshot.hasError) {
-                  return Center(
-                      child: Text('Error fetching completed quizzes'));
-                }
+          if (snapshot.hasError) {
+            return Center(
+                child: Text(
+                  'Error fetching quizzes',
+                  style: TextStyle(color: Colors.red),
+                ));
+          }
 
-                List<String> completedQuizzes = snapshot.data ?? [];
+          List<String> completedQuizzes = snapshot.data ?? [];
 
-                return StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('quizzes')
-                      .snapshots(),
-                  builder: (context, quizSnapshot) {
-                    if (!quizSnapshot.hasData) {
-                      return Center(child: CircularProgressIndicator());
-                    }
+          return StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('quizzes')
+                .snapshots(),
+            builder: (context, quizSnapshot) {
+              if (!quizSnapshot.hasData) {
+                return Center(child: CircularProgressIndicator());
+              }
 
-                    final quizzes = quizSnapshot.data!.docs;
+              final quizzes = quizSnapshot.data!.docs;
 
-                    return ListView(
-                      children: quizzes.map((document) {
-                        final quizName = document['quizName'] ?? 'Unnamed Quiz';
-                        final quizId = document.id;
+              return Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ListView(
+                  children: quizzes.map((document) {
+                    final quizName = document['quizName'] ?? 'Unnamed Quiz';
+                    final quizId = document.id;
 
-                        // Skip quizzes that have already been completed
-                        if (completedQuizzes.contains(quizId)) {
-                          return Container();
-                        }
+                    bool isCompleted =
+                    completedQuizzes.contains(quizId);
 
-                        return ListTile(
-                          title: Text(quizName),
-                          trailing: ElevatedButton(
-                            onPressed: () {
+                    return Card(
+                      elevation: 5.0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: isCompleted
+                              ? Colors.green
+                              : Colors.blueAccent,
+                          child: Icon(
+                            isCompleted
+                                ? Icons.check_circle
+                                : Icons.quiz,
+                            color: Colors.white,
+                          ),
+                        ),
+                        title: Text(
+                          quizName,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        subtitle: isCompleted
+                            ? Text(
+                          'Completed',
+                          style: TextStyle(
+                              color: Colors.green,
+                              fontStyle: FontStyle.italic),
+                        )
+                            : Text(
+                          'Not Attempted',
+                          style: TextStyle(
+                              color: Colors.grey,
+                              fontStyle: FontStyle.italic),
+                        ),
+                        trailing: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            backgroundColor: isCompleted
+                                ? Colors.grey
+                                : Colors.blueAccent,
+                          ),
+                          onPressed: isCompleted
+                              ? null
+                              : () async {
+                            final startQuiz =
+                            await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: Text('Confirmation'),
+                                content: Text(
+                                    'Are you sure you want to start this quiz?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context,
+                                          false);
+                                    },
+                                    child: Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context, true);
+                                    },
+                                    child: Text('Start'),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (startQuiz == true) {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => QuizViewPage(
-                                    quizId: quizId,
-                                    username: widget.username,
-                                  ),
+                                  builder: (context) =>
+                                      QuizViewPage(
+                                        quizId: quizId,
+                                        username: widget.username,
+                                      ),
                                 ),
                               ).then((_) {
                                 setState(() {});
                               });
-                            },
-                            child: Text('Take Quiz'),
+                            }
+                          },
+                          child: Text(
+                            isCompleted ? 'Done' : 'Take Quiz',
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
                           ),
-                        );
-                      }).toList(),
+                        ),
+                      ),
                     );
-                  },
-                );
-              },
-            )
+                  }).toList(),
+                ),
+              );
+            },
+          );
+        },
+      )
           : AccountStudentPage(username: widget.username),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -95,6 +181,9 @@ class _StudentHomePageState extends State<StudentHomePage> {
           ),
         ],
         currentIndex: _currentIndex,
+        selectedItemColor: Colors.blueAccent,
+        unselectedItemColor: Colors.grey,
+        showUnselectedLabels: false,
         onTap: (int index) {
           setState(() {
             _currentIndex = index;
@@ -111,9 +200,9 @@ class _StudentHomePageState extends State<StudentHomePage> {
           .where('username', isEqualTo: username)
           .get();
 
-      // Ekstrak Quiz dari ID pada submissions
+      // Extract Quiz IDs from submissions
       List<String> completedQuizzes =
-          submissions.docs.map((doc) => doc['quizId'] as String).toList();
+      submissions.docs.map((doc) => doc['quizId'] as String).toList();
 
       return completedQuizzes;
     } catch (e) {

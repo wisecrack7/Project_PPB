@@ -101,7 +101,7 @@ class _EditQuizPageState extends State<EditQuizPage> {
             TextFormField(
               controller: _timerController,
               decoration: InputDecoration(
-                labelText: 'Timer Duration (in seconds)',
+                labelText: 'Timer Duration (in minutes)',
                 border: OutlineInputBorder(),
                 contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
               ),
