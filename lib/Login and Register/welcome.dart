@@ -1,8 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:project/Home Page/student_home.dart';
-import 'package:project/Home Page/teacher_home.dart'; // Pastikan import ini benar
+import 'package:project/Home Page/teacher_home.dart';
 import 'package:project/Login and Register/register.dart';
 
 class WelcomeScreen extends StatelessWidget {
@@ -17,16 +17,12 @@ class WelcomeScreen extends StatelessWidget {
         password: passwordController.text.trim(),
       );
 
-      // Mendapatkan detail user dari Firestore Database
       DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(userCredential.user?.uid)
           .get();
 
       if (userDoc.exists) {
-        // Menyimpan data user ke dataLogin
-        await _storeUserDataInDataLogin(userDoc, userDoc.id);
-
         final String role = userDoc['role'];
 
         if (role == 'Teacher') {
@@ -38,7 +34,6 @@ class WelcomeScreen extends StatelessWidget {
             ),
           );
         } else {
-          // Mengarahkan ke StudentHomePage
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -51,21 +46,7 @@ class WelcomeScreen extends StatelessWidget {
         _showErrorDialog(context, 'User not found in database.');
       }
     } catch (e) {
-      _showErrorDialog(context, 'Terjadi kesalahan: ${e.toString()}');
-    }
-  }
-
-  Future<void> _storeUserDataInDataLogin(
-      DocumentSnapshot userDoc, String userId) async {
-    try {
-      // Membuat dokument baru di dataLogin collection dengan userID
-      await FirebaseFirestore.instance.collection('dataLogin').doc(userId).set({
-        'currentId': userId,
-        ...userDoc.data() as Map<String, dynamic>,
-      });
-      print('User data stored in dataLogin successfully.');
-    } catch (e) {
-      print('Failed to store user data in dataLogin: $e');
+      _showErrorDialog(context, 'Login failed: ${e.toString()}');
     }
   }
 
@@ -89,82 +70,85 @@ class WelcomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.blueAccent, Colors.lightBlue],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Card(
-              elevation: 8,
-              color: Colors.white.withOpacity(0.8),
+              elevation: 10,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Menambahkan Logo di bagian atas
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      child: ClipOval(
-                        child: Image.asset(
-                          'lib/assets/JustQuiz.jpeg',
-                          width: 120,
-                          height: 120,
-                          fit: BoxFit.cover,
-                        ),
+                    ClipOval(
+                      child: Image.asset(
+                        'lib/assets/JustQuiz.jpeg',
+                        width: 120,
+                        height: 120,
+                        fit: BoxFit.cover,
                       ),
                     ),
+                    const SizedBox(height: 20),
                     Text(
-                      'Welcome To JustQuiz',
+                      'Welcome to JustQuiz',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: Colors.blueAccent,
                       ),
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     TextField(
                       controller: usernameController,
                       decoration: InputDecoration(
                         labelText: 'Email',
                         border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person),
+                        prefixIcon: const Icon(Icons.email),
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     TextField(
                       controller: passwordController,
                       obscureText: true,
                       decoration: InputDecoration(
                         labelText: 'Password',
                         border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.lock),
+                        prefixIcon: const Icon(Icons.lock),
                       ),
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () => _login(context),
-                      child: Text('Login'),
+                      child: const Text('Login'),
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(double.infinity, 50),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     TextButton(
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                              builder: (context) => RegisterView()),
+                          MaterialPageRoute(builder: (context) => RegisterView()),
                         );
                       },
                       child: Text(
                         'Don\'t have an account? Register here',
-                        style: TextStyle(color: Colors.blue),
+                        style: TextStyle(color: Colors.blueAccent),
                       ),
                     ),
                   ],

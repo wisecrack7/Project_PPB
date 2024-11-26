@@ -1,8 +1,8 @@
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'welcome.dart';
 
 class RegisterView extends StatefulWidget {
@@ -20,111 +20,116 @@ class _RegisterViewState extends State<RegisterView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Register'),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 40.0),
-              child: Center(
-                child: ClipOval(
-                  child: Image.asset(
-                    'lib/assets/JustQuiz.jpeg',
-                    width: 300,
-                    height: 300,
-                    fit: BoxFit.cover,
-                  ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.pinkAccent, Colors.deepPurpleAccent],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Card(
+              elevation: 10,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ClipOval(
+                      child: Image.asset(
+                        'lib/assets/JustQuiz.jpeg',
+                        width: 100,
+                        height: 100,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Register New Account',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurpleAccent,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: emailController,
+                      decoration: InputDecoration(
+                        labelText: 'Email',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.email),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: usernameController,
+                      decoration: InputDecoration(
+                        labelText: 'Username',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: nameController,
+                      decoration: InputDecoration(
+                        labelText: 'Name',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person_add),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: passwordController,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.lock),
+                      ),
+                      obscureText: true,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: selectedRole,
+                      hint: Text('Select Role'),
+                      items: <String>['Teacher', 'Student'].map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          selectedRole = newValue;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () => _register(context),
+                      child: const Text('Register'),
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  TextField(
-                    controller: emailController,
-                    decoration: InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      prefixIcon: const Icon(Icons.email),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: usernameController,
-                    decoration: InputDecoration(
-                      labelText: 'Username',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      prefixIcon: const Icon(Icons.person),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: nameController,
-                    decoration: InputDecoration(
-                      labelText: 'Name',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      prefixIcon: const Icon(Icons.person_add),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: passwordController,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      prefixIcon: const Icon(Icons.lock),
-                    ),
-                    obscureText: true,
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    value: selectedRole,
-                    hint: Text('Select Role'),
-                    items: <String>['Teacher', 'Student'].map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedRole = newValue;
-                      });
-                    },
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () => _register(context),
-                    child: const Text('Register'),
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -147,15 +152,12 @@ class _RegisterViewState extends State<RegisterView> {
     }
 
     try {
-      // Register akun menggunakan Firebase Authentication
       UserCredential userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
       String uid = userCredential.user!.uid;
 
-
       String hashedPassword = _hashPassword(password);
 
-      // Menyimpan data ke Firestore Database
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
         'userID': uid,
         'email': email,
