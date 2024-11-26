@@ -28,18 +28,19 @@ class _AccountStudentPageState extends State<AccountStudentPage> {
 
   //Mengambil data pengguna dari Firestore Database
   Future<void> _fetchAccountData() async {
-    //Mendapatkan UID pengguna yang sedang login pada aplikasi
-    String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    // Mendapatkan UID pengguna yang sedang login pada aplikasi
+    String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
 
-    if (currentUserId.isEmpty) {
+    if (currentUserId == null || currentUserId.isEmpty) {
       _setDefaultValues();
       print("No user is currently logged in.");
       return;
     }
-    //Mengambil dokumen pengguna dari dataLogin
+
     try {
+      // Mengambil dokumen pengguna dari koleksi 'users' berdasarkan UID
       DocumentSnapshot doc = await FirebaseFirestore.instance
-          .collection('dataLogin')
+          .collection('users') // Sesuaikan dengan nama koleksi Anda
           .doc(currentUserId)
           .get();
 
@@ -47,8 +48,8 @@ class _AccountStudentPageState extends State<AccountStudentPage> {
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         setState(() {
-          name = data['name'] ?? 'No Name';
-          role = data['role'] ?? 'No Role';
+          name = data['name'] ?? 'No Name'; // Mengambil field 'name'
+          role = data['role'] ?? 'No Role'; // Mengambil field 'role'
         });
         print("Fetched data: $data");
       } else {
@@ -137,7 +138,7 @@ class _AccountStudentPageState extends State<AccountStudentPage> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => MyApp()),
-      (Route<dynamic> route) => false,
+          (Route<dynamic> route) => false,
     );
   }
 }

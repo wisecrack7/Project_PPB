@@ -19,18 +19,18 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _fetchAccountData() async {
-    String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
 
-
-    if (currentUserId.isEmpty) {
+    if (currentUserId == null || currentUserId.isEmpty) {
       _setDefaultValues();
       print("No user is currently logged in.");
       return;
     }
 
     try {
+      // Mengambil dokumen pengguna dari koleksi 'users' berdasarkan UID
       DocumentSnapshot doc = await FirebaseFirestore.instance
-          .collection('dataLogin')
+          .collection('users') // Sesuaikan dengan nama koleksi Anda
           .doc(currentUserId)
           .get();
 
@@ -38,8 +38,8 @@ class _AccountPageState extends State<AccountPage> {
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         setState(() {
-          name = data['name'] ?? 'No Name';
-          role = data['role'] ?? 'No Role';
+          name = data['name'] ?? 'No Name'; // Mengambil field 'name'
+          role = data['role'] ?? 'No Role'; // Mengambil field 'role'
         });
         print("Fetched data: $data");
       } else {
@@ -82,7 +82,6 @@ class _AccountPageState extends State<AccountPage> {
               style: TextStyle(fontSize: 18),
             ),
             SizedBox(height: 20),
-
             Spacer(),
             ElevatedButton(
               onPressed: () {
