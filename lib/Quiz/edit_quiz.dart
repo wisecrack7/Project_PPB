@@ -157,7 +157,7 @@ class _EditQuizPageState extends State<EditQuizPage> {
                   _questions[questionIndex]['question'] = value;
                 });
               },
-              controller: TextEditingController(text: question['question']),
+              initialValue: question['question'],
             ),
             const SizedBox(height: 10),
             for (int i = 0; i < (question['options']?.length ?? 0); i++)
@@ -173,11 +173,9 @@ class _EditQuizPageState extends State<EditQuizPage> {
                           contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                         ),
                         onChanged: (value) {
-                          setState(() {
-                            _questions[questionIndex]['options'][i] = value;
-                          });
+                          _questions[questionIndex]['options'][i] = value;
                         },
-                        controller: TextEditingController(text: question['options'][i]),
+                        initialValue: question['options'][i],
                       ),
                     ),
                     IconButton(
