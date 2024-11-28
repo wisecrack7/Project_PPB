@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -85,7 +84,7 @@ class _QuizViewPageState extends State<QuizViewPage> {
 
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false, // Menghilangkan tombol back
+        automaticallyImplyLeading: false,
         title: Text('Quiz'),
         actions: [
           Padding(
@@ -96,7 +95,7 @@ class _QuizViewPageState extends State<QuizViewPage> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: _remainingTime <= 30 ? Colors.red : Colors.black, // Timer berubah jadi merah jika waktu <= 30 detik
+                  color: _remainingTime <= 30 ? Colors.red : Colors.black,
                 ),
               ),
             ),
@@ -182,7 +181,7 @@ class _QuizViewPageState extends State<QuizViewPage> {
             if ((currentPage + 1) * questionsPerPage >= questions.length)
               ElevatedButton.icon(
                 onPressed: () {
-                  _timer.cancel(); // Menghentikan timer saat melakukan submit
+                  _timer.cancel();
                   _submitQuiz();
                 },
                 icon: Icon(Icons.check),
