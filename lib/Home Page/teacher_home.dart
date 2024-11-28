@@ -17,8 +17,11 @@ class _TeacherHomeViewState extends State<TeacherHomeView> {
   int _selectedIndex = 0;
 
   Future<List<Map<String, dynamic>>> _fetchQuizzes() async {
-    QuerySnapshot snapshot =
-        await FirebaseFirestore.instance.collection('quizzes').get();
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('quizzes')
+        .where('creatorUsername', isEqualTo: widget.username)
+        .get();
+
     List<Map<String, dynamic>> quizzes = snapshot.docs.map((doc) {
       return {
         'id': doc.id,
@@ -58,8 +61,8 @@ class _TeacherHomeViewState extends State<TeacherHomeView> {
       body: _selectedIndex == 0
           ? _buildHomeContent()
           : _selectedIndex == 1
-              ? _buildCreateContent()
-              : AccountPage(),
+          ? _buildCreateContent()
+          : AccountPage(),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -177,6 +180,6 @@ class _TeacherHomeViewState extends State<TeacherHomeView> {
   }
 
   Widget _buildCreateContent() {
-    return CreateQuizPage();
+    return CreateQuizPage(username: widget.username);
   }
 }
