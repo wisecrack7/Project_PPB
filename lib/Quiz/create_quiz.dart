@@ -2,6 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class CreateQuizPage extends StatefulWidget {
+  final String username; // Tambahkan username teacher
+
+  CreateQuizPage({required this.username}); // Tambahkan konstruktor untuk menerima username
+
   @override
   _CreateQuizPageState createState() => _CreateQuizPageState();
 }
@@ -54,12 +58,12 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
         'quizName': _quizNameController.text,
         'timerDuration': timerDuration,
         'questions': questions,
+        'creatorUsername': widget.username, // Ensure consistency here
       };
 
       await FirebaseFirestore.instance
           .collection('quizzes')
-          .doc(quizId.toString())
-          .set(quizData);
+          .add(quizData); // Use add to auto-generate document ID
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Quiz saved successfully!')),
@@ -71,6 +75,7 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
       });
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
