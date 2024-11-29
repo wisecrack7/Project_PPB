@@ -24,8 +24,8 @@ class _StudentHomePageState extends State<StudentHomePage> {
         elevation: 4.0,
       ),
       body: _currentIndex == 0
-          ? FutureBuilder<List<String>>(
-        future: _fetchCompletedQuizzes(widget.username),
+          ? FutureBuilder<Map<String, dynamic>>(
+        future: _fetchCompletedQuizzesWithScores(widget.username),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -39,7 +39,8 @@ class _StudentHomePageState extends State<StudentHomePage> {
                 ));
           }
 
-          List<String> completedQuizzes = snapshot.data ?? [];
+          Map<String, dynamic> completedQuizzes =
+              snapshot.data ?? {}; // Map of quizId to score
 
           return StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
@@ -56,11 +57,15 @@ class _StudentHomePageState extends State<StudentHomePage> {
                 padding: const EdgeInsets.all(8.0),
                 child: ListView(
                   children: quizzes.map((document) {
-                    final quizName = document['quizName'] ?? 'Unnamed Quiz';
+                    final quizName =
+                        document['quizName'] ?? 'Unnamed Quiz';
                     final quizId = document.id;
 
                     bool isCompleted =
-                    completedQuizzes.contains(quizId);
+                    completedQuizzes.containsKey(quizId);
+                    String? score = isCompleted
+                        ? completedQuizzes[quizId].toString()
+                        : null;
 
                     return Card(
                       elevation: 5.0,
@@ -89,7 +94,7 @@ class _StudentHomePageState extends State<StudentHomePage> {
                         ),
                         subtitle: isCompleted
                             ? Text(
-                          'Completed',
+                          'Score: $score',
                           style: TextStyle(
                               color: Colors.green,
                               fontStyle: FontStyle.italic),
@@ -100,18 +105,17 @@ class _StudentHomePageState extends State<StudentHomePage> {
                               color: Colors.grey,
                               fontStyle: FontStyle.italic),
                         ),
-                        trailing: ElevatedButton(
+                        trailing: isCompleted
+                            ? null
+                            : ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10.0),
+                              borderRadius:
+                              BorderRadius.circular(10.0),
                             ),
-                            backgroundColor: isCompleted
-                                ? Colors.grey
-                                : Colors.blueAccent,
+                            backgroundColor: Colors.blueAccent,
                           ),
-                          onPressed: isCompleted
-                              ? null
-                              : () async {
+                          onPressed: () async {
                             final startQuiz =
                             await showDialog<bool>(
                               context: context,
@@ -122,14 +126,15 @@ class _StudentHomePageState extends State<StudentHomePage> {
                                 actions: [
                                   TextButton(
                                     onPressed: () {
-                                      Navigator.pop(context,
-                                          false);
+                                      Navigator.pop(
+                                          context, false);
                                     },
                                     child: Text('Cancel'),
                                   ),
                                   TextButton(
                                     onPressed: () {
-                                      Navigator.pop(context, true);
+                                      Navigator.pop(
+                                          context, true);
                                     },
                                     child: Text('Start'),
                                   ),
@@ -144,7 +149,8 @@ class _StudentHomePageState extends State<StudentHomePage> {
                                   builder: (context) =>
                                       QuizViewPage(
                                         quizId: quizId,
-                                        username: widget.username,
+                                        username:
+                                        widget.username,
                                       ),
                                 ),
                               ).then((_) {
@@ -153,7 +159,7 @@ class _StudentHomePageState extends State<StudentHomePage> {
                             }
                           },
                           child: Text(
-                            isCompleted ? 'Done' : 'Take Quiz',
+                            'Take Quiz',
                             style: TextStyle(
                               color: Colors.white,
                             ),
@@ -193,21 +199,24 @@ class _StudentHomePageState extends State<StudentHomePage> {
     );
   }
 
-  Future<List<String>> _fetchCompletedQuizzes(String username) async {
+  Future<Map<String, dynamic>> _fetchCompletedQuizzesWithScores(
+      String username) async {
     try {
       QuerySnapshot submissions = await FirebaseFirestore.instance
           .collection('submissions')
           .where('username', isEqualTo: username)
           .get();
 
-      // Extract Quiz IDs from submissions
-      List<String> completedQuizzes =
-      submissions.docs.map((doc) => doc['quizId'] as String).toList();
+      // Extract Quiz IDs and scores from submissions
+      Map<String, dynamic> completedQuizzes = {
+        for (var doc in submissions.docs)
+          doc['quizId']: doc['score'] // quizId: score
+      };
 
       return completedQuizzes;
     } catch (e) {
-      print('Error fetching completed quizzes: $e');
-      return [];
+      print('Error fetching completed quizzes and scores: $e');
+      return {};
     }
   }
 }

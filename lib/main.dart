@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.active) {
             User? user = snapshot.data;
             // Pengarahan untuk langsung ke WelcomeScreen jika sudah terautentikasi
-            return user == null ? WelcomeScreen() : WelcomeScreen(); // Modify this line if needed
+            return user == null ? WelcomeScreen() : WelcomeScreen();
           }
           return Center(child: CircularProgressIndicator());
         },

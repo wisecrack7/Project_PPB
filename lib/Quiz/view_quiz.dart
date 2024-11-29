@@ -1,6 +1,8 @@
 import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:project/Home Page/student_home.dart';
 
 class QuizViewPage extends StatefulWidget {
   final String quizId;
@@ -49,8 +51,8 @@ class _QuizViewPageState extends State<QuizViewPage> {
   void _startTimer() {
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       if (_remainingTime <= 0) {
-        _timer.cancel();
-        _submitQuiz(); // otomatis submit ketika waktu habis
+        _timer.cancel(); // Hentikan timer
+        _submitQuiz(redirect: true); // Submit otomatis saat waktu habis
       } else {
         setState(() {
           _remainingTime--;
@@ -73,8 +75,7 @@ class _QuizViewPageState extends State<QuizViewPage> {
 
   List<dynamic> _getPaginatedQuestions() {
     final startIndex = currentPage * questionsPerPage;
-    final endIndex =
-    (startIndex + questionsPerPage).clamp(0, questions.length);
+    final endIndex = (startIndex + questionsPerPage).clamp(0, questions.length);
     return questions.sublist(startIndex, endIndex);
   }
 
@@ -105,54 +106,54 @@ class _QuizViewPageState extends State<QuizViewPage> {
       body: questions.isEmpty
           ? Center(child: CircularProgressIndicator())
           : ListView.builder(
-        itemCount: paginatedQuestions.length,
-        itemBuilder: (context, index) {
-          final question = paginatedQuestions[index];
-          final questionText =
-              question['question'] ?? 'Pertanyaan tidak tersedia';
-          final options = question['options'] as List<dynamic>? ?? [];
-          return Card(
-            elevation: 3,
-            margin: const EdgeInsets.symmetric(
-                vertical: 8.0, horizontal: 16.0),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Q${currentPage * questionsPerPage + index + 1}: $questionText',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blueAccent,
+              itemCount: paginatedQuestions.length,
+              itemBuilder: (context, index) {
+                final question = paginatedQuestions[index];
+                final questionText =
+                    question['question'] ?? 'Pertanyaan tidak tersedia';
+                final options = question['options'] as List<dynamic>? ?? [];
+                return Card(
+                  elevation: 3,
+                  margin: const EdgeInsets.symmetric(
+                      vertical: 8.0, horizontal: 16.0),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Q${currentPage * questionsPerPage + index + 1}: $questionText',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blueAccent,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        ...options.map((option) {
+                          return RadioListTile<String>(
+                            title: Text(
+                              option ?? 'Opsi tidak tersedia',
+                              style: TextStyle(
+                                fontSize: 16,
+                              ),
+                            ),
+                            value: option ?? '',
+                            groupValue: answers[questionText],
+                            activeColor: Colors.green,
+                            onChanged: (value) {
+                              setState(() {
+                                answers[questionText] = value;
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  ...options.map((option) {
-                    return RadioListTile<String>(
-                      title: Text(
-                        option ?? 'Opsi tidak tersedia',
-                        style: TextStyle(
-                          fontSize: 16,
-                        ),
-                      ),
-                      value: option ?? '',
-                      groupValue: answers[questionText],
-                      activeColor: Colors.green,
-                      onChanged: (value) {
-                        setState(() {
-                          answers[questionText] = value;
-                        });
-                      },
-                    );
-                  }).toList(),
-                ],
-              ),
+                );
+              },
             ),
-          );
-        },
-      ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Row(
@@ -193,7 +194,7 @@ class _QuizViewPageState extends State<QuizViewPage> {
     );
   }
 
-  void _submitQuiz() async {
+  void _submitQuiz({bool redirect = false}) async {
     final totalQuestions = questions.length;
     int correctAnswersCount = 0;
 
@@ -217,21 +218,40 @@ class _QuizViewPageState extends State<QuizViewPage> {
       'username': widget.username,
     });
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Quiz Disubmit'),
-        content: Text('Skor Anda: ${score.toStringAsFixed(2)}%'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.popUntil(context, (route) => route.isFirst);
-            },
-            child: Text('OK'),
-          ),
-        ],
-      ),
-    );
+    if (redirect) {
+      // Navigasi langsung ke StudentHomePage tanpa dialog jika waktu habis
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => StudentHomePage(username: widget.username),
+        ),
+        (route) => false,
+      );
+    } else {
+      // Tampilkan dialog skor untuk submit manual
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Quiz Submitted'),
+          content: Text('Your score: ${score.toStringAsFixed(2)}%'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Tutup dialog
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        StudentHomePage(username: widget.username),
+                  ),
+                  (route) => false,
+                );
+              },
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 }

@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:project/Home Page/student_home.dart';
 import 'package:project/Home Page/teacher_home.dart';
 import 'package:project/Login and Register/register.dart';
@@ -12,7 +12,7 @@ class WelcomeScreen extends StatelessWidget {
   Future<void> _login(BuildContext context) async {
     try {
       final UserCredential userCredential =
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: usernameController.text.trim(),
         password: passwordController.text.trim(),
       );
@@ -117,7 +117,7 @@ class WelcomeScreen extends StatelessWidget {
                         prefixIcon: const Icon(Icons.email),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     TextField(
                       controller: passwordController,
                       obscureText: true,
@@ -143,7 +143,8 @@ class WelcomeScreen extends StatelessWidget {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => RegisterView()),
+                          MaterialPageRoute(
+                              builder: (context) => RegisterView()),
                         );
                       },
                       child: Text(
