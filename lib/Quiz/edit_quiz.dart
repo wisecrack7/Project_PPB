@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:project/Home Page/score_view.dart';
 
 class EditQuizPage extends StatefulWidget {
   final String quizId;
@@ -73,6 +74,14 @@ class _EditQuizPageState extends State<EditQuizPage> {
     });
   }
 
+  void _viewScores() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ScoreViewPage(quizId: widget.quizId),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -125,6 +134,14 @@ class _EditQuizPageState extends State<EditQuizPage> {
             ElevatedButton(
               onPressed: _saveQuiz,
               child: const Text('Save Changes'),
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: _viewScores,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+              ),
+              child: const Text('Lihat Nilai'),
             ),
           ],
         ),
@@ -226,3 +243,5 @@ class _EditQuizPageState extends State<EditQuizPage> {
     );
   }
 }
+
+
