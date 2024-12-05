@@ -21,18 +21,22 @@ class _RegisterViewState extends State<RegisterView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Register'),
+        title: const Text(
+          'Register',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.of(context).pop(); // Kembali ke main.dart
+            Navigator.of(context).pop();
           },
         ),
+        backgroundColor: Colors.deepPurple,
       ),
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.pinkAccent, Colors.deepPurpleAccent],
+            colors: [Colors.deepPurpleAccent, Colors.cyan],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -41,7 +45,7 @@ class _RegisterViewState extends State<RegisterView> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Card(
-              elevation: 10,
+              elevation: 12,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -50,65 +54,58 @@ class _RegisterViewState extends State<RegisterView> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    ClipOval(
-                      child: Image.asset(
-                        'lib/assets/JustQuiz.jpeg',
-                        width: 100,
-                        height: 100,
-                        fit: BoxFit.cover,
+                    AnimatedContainer(
+                      duration: const Duration(seconds: 1),
+                      curve: Curves.easeInOut,
+                      child: ClipOval(
+                        child: Image.asset(
+                          'lib/assets/JustQuiz.jpeg',
+                          width: 120,
+                          height: 120,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    Text(
+                    const Text(
                       'Register New Account',
                       style: TextStyle(
-                        fontSize: 22,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Colors.deepPurpleAccent,
+                        color: Colors.deepPurple,
                       ),
                     ),
                     const SizedBox(height: 20),
-                    TextField(
+                    _buildTextField(
                       controller: emailController,
-                      decoration: InputDecoration(
-                        labelText: 'Email',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.email),
-                      ),
+                      label: 'Email',
+                      icon: Icons.email_outlined,
                     ),
                     const SizedBox(height: 16),
-                    TextField(
+                    _buildTextField(
                       controller: usernameController,
-                      decoration: InputDecoration(
-                        labelText: 'Username',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person),
-                      ),
+                      label: 'Username',
+                      icon: Icons.person_outline,
                     ),
                     const SizedBox(height: 16),
-                    TextField(
+                    _buildTextField(
                       controller: nameController,
-                      decoration: InputDecoration(
-                        labelText: 'Name',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person_add),
-                      ),
+                      label: 'Name',
+                      icon: Icons.person_add_outlined,
                     ),
                     const SizedBox(height: 16),
-                    TextField(
+                    _buildTextField(
                       controller: passwordController,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.lock),
-                      ),
+                      label: 'Password',
+                      icon: Icons.lock_outline,
                       obscureText: true,
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       value: selectedRole,
-                      hint: Text('Select Role'),
-                      items: <String>['Teacher', 'Student'].map((String value) {
+                      hint: const Text('Select Role'),
+                      items: <String>['Teacher', 'Student']
+                          .map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
                           child: Text(value),
@@ -120,17 +117,28 @@ class _RegisterViewState extends State<RegisterView> {
                         });
                       },
                       decoration: InputDecoration(
-                        border: OutlineInputBorder(),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[100],
                       ),
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () => _register(context),
-                      child: const Text('Register'),
                       style: ElevatedButton.styleFrom(
-                        minimumSize: Size(double.infinity, 50),
+                        backgroundColor: Colors.deepPurple,
+                        minimumSize: const Size(double.infinity, 50),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Register',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -141,6 +149,27 @@ class _RegisterViewState extends State<RegisterView> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool obscureText = false,
+  }) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        prefixIcon: Icon(icon, color: Colors.deepPurple),
+        filled: true,
+        fillColor: Colors.grey[200],
+      ),
+      obscureText: obscureText,
     );
   }
 
