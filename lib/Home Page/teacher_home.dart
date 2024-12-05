@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:project/Home Page/account.dart'; // Import the AccountPage
+import 'package:project/Home Page/account.dart';
 import 'package:project/Quiz/create_quiz.dart';
 import 'package:project/Quiz/edit_quiz.dart';
 
@@ -57,12 +57,46 @@ class _TeacherHomeViewState extends State<TeacherHomeView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Teacher Home')),
-      body: _selectedIndex == 0
-          ? _buildHomeContent()
-          : _selectedIndex == 1
-          ? _buildCreateContent()
-          : AccountPage(),
+      appBar: AppBar(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.school, color: Colors.white),
+            SizedBox(width: 8),
+            Text(
+              'Just Quiz',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blueAccent, Colors.greenAccent],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.vertical(
+              bottom: Radius.circular(20),
+            ),
+          ),
+        ),
+      ),
+      body: AnimatedSwitcher(
+        duration: Duration(milliseconds: 500),
+        child: _selectedIndex == 0
+            ? _buildHomeContent()
+            : _selectedIndex == 1
+                ? _buildCreateContent()
+                : AccountPage(),
+      ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -79,6 +113,9 @@ class _TeacherHomeViewState extends State<TeacherHomeView> {
           ),
         ],
         currentIndex: _selectedIndex,
+        selectedItemColor: Colors.blueAccent,
+        unselectedItemColor: Colors.grey,
+        backgroundColor: Colors.white,
         onTap: _onItemTapped,
       ),
     );
@@ -88,9 +125,25 @@ class _TeacherHomeViewState extends State<TeacherHomeView> {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Hi, ${widget.username}'),
-          const SizedBox(height: 20),
+          Text(
+            'Hello, ${widget.username} 👋',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.blueAccent,
+            ),
+          ),
+          SizedBox(height: 16),
+          Text(
+            'Here are your quizzes:',
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.grey[700],
+            ),
+          ),
+          SizedBox(height: 20),
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
               future: _fetchQuizzes(),
@@ -115,57 +168,96 @@ class _TeacherHomeViewState extends State<TeacherHomeView> {
                     final title = quiz['quizName'] ?? 'No Title';
                     final questionCount = quiz['questions']?.length ?? 0;
 
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      child: ListTile(
-                        title: Text(title),
-                        subtitle: Text('Questions: $questionCount'),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.edit),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        EditQuizPage(quizId: quiz['id']),
-                                  ),
-                                );
-                              },
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                EditQuizPage(quizId: quiz['id']),
+                          ),
+                        );
+                      },
+                      child: Card(
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        elevation: 6.0,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.blue.shade100,
+                                Colors.blue.shade50
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
-                            IconButton(
-                              icon: Icon(Icons.delete),
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                      title: Text('Delete Quiz'),
-                                      content: Text(
-                                          'Are you sure you want to delete this quiz?'),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                          child: Text('Cancel'),
-                                        ),
-                                        TextButton(
-                                          onPressed: () {
-                                            _deleteQuiz(quiz['id']);
-                                            Navigator.of(context).pop();
-                                          },
-                                          child: Text('Delete'),
-                                        ),
-                                      ],
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          child: ListTile(
+                            contentPadding: EdgeInsets.all(12),
+                            title: Text(
+                              title,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blueAccent,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Questions: $questionCount',
+                              style: TextStyle(color: Colors.grey[700]),
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(Icons.edit, color: Colors.blue),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            EditQuizPage(quizId: quiz['id']),
+                                      ),
                                     );
                                   },
-                                );
-                              },
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) {
+                                        return AlertDialog(
+                                          title: Text('Delete Quiz'),
+                                          content: Text(
+                                              'Are you sure you want to delete this quiz?'),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: Text('Cancel'),
+                                            ),
+                                            TextButton(
+                                              onPressed: () {
+                                                _deleteQuiz(quiz['id']);
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: Text('Delete'),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     );
