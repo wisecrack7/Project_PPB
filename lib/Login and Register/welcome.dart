@@ -70,10 +70,9 @@ class WelcomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.blueAccent, Colors.lightBlue],
+            colors: [Colors.deepPurpleAccent, Colors.cyan],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -82,7 +81,7 @@ class WelcomeScreen extends StatelessWidget {
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Card(
-              elevation: 10,
+              elevation: 12,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -105,36 +104,34 @@ class WelcomeScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blueAccent,
+                        color: Colors.deepPurpleAccent,
                       ),
                     ),
                     const SizedBox(height: 20),
-                    TextField(
+                    _buildTextField(
                       controller: usernameController,
-                      decoration: InputDecoration(
-                        labelText: 'Email',
-                        border: OutlineInputBorder(),
-                        prefixIcon: const Icon(Icons.email),
-                      ),
+                      label: 'Email',
+                      icon: Icons.email_outlined,
                     ),
                     const SizedBox(height: 20),
-                    TextField(
+                    _buildTextField(
                       controller: passwordController,
+                      label: 'Password',
+                      icon: Icons.lock_outline,
                       obscureText: true,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        border: OutlineInputBorder(),
-                        prefixIcon: const Icon(Icons.lock),
-                      ),
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () => _login(context),
-                      child: const Text('Login'),
+                      child: const Text(
+                        'Login',
+                        style: TextStyle(color: Colors.white),
+                      ),
                       style: ElevatedButton.styleFrom(
-                        minimumSize: Size(double.infinity, 50),
+                        backgroundColor: Colors.deepPurple,
+                        minimumSize: const Size(double.infinity, 50),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
@@ -144,12 +141,13 @@ class WelcomeScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => RegisterView()),
+                            builder: (context) => RegisterView(),
+                          ),
                         );
                       },
                       child: Text(
                         'Don\'t have an account? Register here',
-                        style: TextStyle(color: Colors.blueAccent),
+                        style: TextStyle(color: Colors.deepPurple),
                       ),
                     ),
                   ],
@@ -159,6 +157,27 @@ class WelcomeScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool obscureText = false,
+  }) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        prefixIcon: Icon(icon, color: Colors.deepPurple),
+        filled: true,
+        fillColor: Colors.grey[200],
+      ),
+      obscureText: obscureText,
     );
   }
 }
