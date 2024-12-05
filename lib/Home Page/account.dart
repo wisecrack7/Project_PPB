@@ -28,9 +28,8 @@ class _AccountPageState extends State<AccountPage> {
     }
 
     try {
-      // Mengambil dokumen pengguna dari koleksi 'users' berdasarkan UID
       DocumentSnapshot doc = await FirebaseFirestore.instance
-          .collection('users') // Sesuaikan dengan nama koleksi Anda
+          .collection('users')
           .doc(currentUserId)
           .get();
 
@@ -38,8 +37,8 @@ class _AccountPageState extends State<AccountPage> {
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         setState(() {
-          name = data['name'] ?? 'No Name'; // Mengambil field 'name'
-          role = data['role'] ?? 'No Role'; // Mengambil field 'role'
+          name = data['name'] ?? 'No Name';
+          role = data['role'] ?? 'No Role';
         });
         print("Fetched data: $data");
       } else {
@@ -62,27 +61,62 @@ class _AccountPageState extends State<AccountPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text('Account Information',
+            style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: Colors.white)),
+        backgroundColor: Color(0xFF4CAF50),
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Account Information',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 20),
-            Text(
-              'Name: $name',
-              style: TextStyle(fontSize: 18),
-            ),
             SizedBox(height: 10),
-            Text(
-              'Role: $role',
-              style: TextStyle(fontSize: 18),
+            Card(
+              elevation: 5,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15)),
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.account_circle,
+                            color: Color(0xFF4CAF50), size: 30),
+                        SizedBox(width: 10),
+                        Text(
+                          'Name: $name',
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Icon(Icons.supervisor_account,
+                            color: Color(0xFF4CAF50), size: 30),
+                        SizedBox(width: 10),
+                        Text(
+                          'Role: $role',
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 30),
             Spacer(),
+            // Logout Button
             ElevatedButton(
               onPressed: () {
                 _logout(context);
@@ -94,6 +128,7 @@ class _AccountPageState extends State<AccountPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
+                textStyle: TextStyle(fontSize: 18),
               ),
             ),
           ],
@@ -107,7 +142,8 @@ class _AccountPageState extends State<AccountPage> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => MyApp()),
-          (Route<dynamic> route) => false,
+      // Redirecting to MyApp (login screen)
+      (Route<dynamic> route) => false,
     );
   }
 }
