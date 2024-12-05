@@ -2,9 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class CreateQuizPage extends StatefulWidget {
-  final String username; // Tambahkan username teacher
+  final String username;
 
-  CreateQuizPage({required this.username}); // Tambahkan konstruktor untuk menerima username
+  CreateQuizPage({required this.username});
 
   @override
   _CreateQuizPageState createState() => _CreateQuizPageState();
@@ -15,6 +15,7 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
   final _quizNameController = TextEditingController();
   final _timerController = TextEditingController();
   List<Map<String, dynamic>> questions = [];
+  bool allowBack = false;
 
   void _addQuestion() {
     setState(() {
@@ -27,6 +28,12 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
     });
   }
 
+  void _removeQuestion(int index) {
+    setState(() {
+      questions.removeAt(index);
+    });
+  }
+
   void _addOption(int questionIndex) {
     setState(() {
       questions[questionIndex]['options'].add('');
@@ -35,7 +42,7 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
 
   Future<int> _getNextQuizId() async {
     QuerySnapshot snapshot =
-    await FirebaseFirestore.instance.collection('quizzes').get();
+        await FirebaseFirestore.instance.collection('quizzes').get();
     int maxId = 0;
 
     for (var doc in snapshot.docs) {
@@ -58,12 +65,11 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
         'quizName': _quizNameController.text,
         'timerDuration': timerDuration,
         'questions': questions,
-        'creatorUsername': widget.username, // Ensure consistency here
+        'creatorUsername': widget.username,
+        'allowBack': allowBack,
       };
 
-      await FirebaseFirestore.instance
-          .collection('quizzes')
-          .add(quizData); // Use add to auto-generate document ID
+      await FirebaseFirestore.instance.collection('quizzes').add(quizData);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Quiz saved successfully!')),
@@ -72,15 +78,18 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
       _timerController.clear();
       setState(() {
         questions.clear();
+        allowBack = false;
       });
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Create Quiz')),
+      appBar: AppBar(
+        title: Text('Create Quiz'),
+        backgroundColor: Color(0xFF4CAF50),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -89,12 +98,15 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                SizedBox(height: 10),
                 TextFormField(
                   controller: _quizNameController,
                   decoration: InputDecoration(
                     labelText: 'Quiz Name',
                     border: OutlineInputBorder(),
                     helperText: 'Enter the name of the quiz.',
+                    filled: true,
+                    fillColor: Colors.grey[200],
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -104,12 +116,15 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                   },
                 ),
                 SizedBox(height: 16),
+
                 TextFormField(
                   controller: _timerController,
                   decoration: InputDecoration(
                     labelText: 'Timer Duration (in minutes)',
                     border: OutlineInputBorder(),
                     helperText: 'Enter the timer duration for the quiz.',
+                    filled: true,
+                    fillColor: Colors.grey[200],
                   ),
                   keyboardType: TextInputType.number,
                   validator: (value) {
@@ -122,50 +137,89 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                   },
                 ),
                 SizedBox(height: 24),
+                // Allow Back Switch
+                SwitchListTile(
+                  title: Text('Allow Back'),
+                  subtitle: Text(
+                      'Allow participants to go back to previous questions'),
+                  value: allowBack,
+                  onChanged: (bool value) {
+                    setState(() {
+                      allowBack = value;
+                    });
+                  },
+                  activeColor: Color(0xFF4CAF50),
+                ),
+                SizedBox(height: 24),
+                // Questions Section
                 Text(
                   'Questions',
-                  style: Theme.of(context).textTheme.headlineSmall,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 8),
+                // Dynamic List of Questions
                 for (int index = 0; index < questions.length; index++)
                   Card(
                     elevation: 3,
                     margin: EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                     child: Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.all(16.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Question ${index + 1}',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => _removeQuestion(index),
+                              ),
+                            ],
+                          ),
                           TextFormField(
                             initialValue: questions[index]['question'],
                             decoration: InputDecoration(
-                              labelText: 'Question ${index + 1}',
+                              labelText: 'Enter the question',
                               border: OutlineInputBorder(),
+                              filled: true,
+                              fillColor: Colors.grey[200],
                             ),
                             onChanged: (value) {
                               questions[index]['question'] = value;
                             },
                           ),
                           SizedBox(height: 8),
+                          // Options for the Question
                           Text(
                             'Options',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                           SizedBox(height: 8),
                           for (int i = 0;
-                          i < questions[index]['options'].length;
-                          i++)
+                              i < questions[index]['options'].length;
+                              i++)
                             Padding(
                               padding: const EdgeInsets.only(bottom: 8.0),
                               child: Row(
                                 children: [
                                   Expanded(
                                     child: TextFormField(
-                                      initialValue:
-                                      questions[index]['options'][i],
+                                      initialValue: questions[index]['options']
+                                          [i],
                                       decoration: InputDecoration(
                                         labelText: 'Option ${i + 1}',
                                         border: OutlineInputBorder(),
+                                        filled: true,
+                                        fillColor: Colors.grey[200],
                                       ),
                                       onChanged: (value) {
                                         questions[index]['options'][i] = value;
@@ -184,15 +238,22 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                                 ],
                               ),
                             ),
+                          // Add Option Button
                           ElevatedButton.icon(
                             onPressed: () => _addOption(index),
                             icon: Icon(Icons.add),
                             label: Text('Add Option'),
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blueAccent),
                           ),
+                          SizedBox(height: 10),
+                          // Dropdown for Correct Answer
                           DropdownButtonFormField<int>(
                             decoration: InputDecoration(
                               labelText: 'Correct Answer',
                               border: OutlineInputBorder(),
+                              filled: true,
+                              fillColor: Colors.grey[200],
                             ),
                             value: questions[index]['correctAnswerIndex'],
                             onChanged: (int? newValue) {
@@ -203,7 +264,7 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                             },
                             items: List.generate(
                               questions[index]['options'].length,
-                                  (i) => DropdownMenuItem<int>(
+                              (i) => DropdownMenuItem<int>(
                                 value: i,
                                 child: Text('Option ${i + 1}'),
                               ),
@@ -220,16 +281,22 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                     ),
                   ),
                 SizedBox(height: 16),
+                // Add Question Button
                 ElevatedButton.icon(
                   onPressed: _addQuestion,
                   icon: Icon(Icons.add_circle),
                   label: Text('Add Question'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orangeAccent),
                 ),
                 SizedBox(height: 16),
+                // Save Quiz Button
                 ElevatedButton.icon(
                   onPressed: _saveQuiz,
                   icon: Icon(Icons.save),
                   label: Text('Save Quiz'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF4CAF50)),
                 ),
               ],
             ),
