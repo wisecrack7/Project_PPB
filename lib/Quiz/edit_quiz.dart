@@ -15,6 +15,7 @@ class _EditQuizPageState extends State<EditQuizPage> {
   final TextEditingController _quizNameController = TextEditingController();
   final TextEditingController _timerController = TextEditingController();
   List<Map<String, dynamic>> _questions = [];
+  bool allowBackNavigation = false;
 
   @override
   void initState() {
@@ -32,6 +33,7 @@ class _EditQuizPageState extends State<EditQuizPage> {
       _quizNameController.text = data['quizName'];
       _timerController.text = (data['timerDuration'] ?? '').toString();
       _questions = List<Map<String, dynamic>>.from(data['questions'] ?? []);
+      allowBackNavigation = data['allowBack'] ?? false;
       setState(() {});
     }
   }
@@ -44,6 +46,7 @@ class _EditQuizPageState extends State<EditQuizPage> {
       'quizName': _quizNameController.text,
       'timerDuration': int.tryParse(_timerController.text) ?? 0,
       'questions': _questions,
+      'allowBack': allowBackNavigation,
     });
     _showSuccessDialog();
   }
@@ -68,9 +71,15 @@ class _EditQuizPageState extends State<EditQuizPage> {
     setState(() {
       _questions.add({
         'question': '',
-        'options': ['', '', '', ''], // Default 4 options
+        'options': ['', '', '', ''],
         'correctAnswerIndex': null,
       });
+    });
+  }
+
+  void _deleteQuestion(int index) {
+    setState(() {
+      _questions.removeAt(index);
     });
   }
 
@@ -87,6 +96,7 @@ class _EditQuizPageState extends State<EditQuizPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Quiz'),
+        backgroundColor: Color(0xFF4CAF50),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -98,30 +108,61 @@ class _EditQuizPageState extends State<EditQuizPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            // Quiz Name Field
             TextFormField(
               controller: _quizNameController,
               decoration: InputDecoration(
                 labelText: 'Quiz Name',
                 border: OutlineInputBorder(),
                 contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+                filled: true,
+                fillColor: Colors.grey[200],
               ),
             ),
             const SizedBox(height: 16),
+            // Timer Duration Field
             TextFormField(
               controller: _timerController,
               decoration: InputDecoration(
                 labelText: 'Timer Duration (in minutes)',
                 border: OutlineInputBorder(),
                 contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+                filled: true,
+                fillColor: Colors.grey[200],
               ),
               keyboardType: TextInputType.number,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            // Back Navigation Checkbox
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Checkbox(
+                  value: allowBackNavigation,
+                  onChanged: (value) async {
+                    setState(() {
+                      allowBackNavigation = value ?? false;
+                    });
+                  },
+                ),
+                const Text(
+                  'Allow Back Navigation',
+                  style: TextStyle(fontSize: 16),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // Add Question Button
             ElevatedButton(
               onPressed: _addQuestion,
-              child: const Text('Add Question'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+              ),
+              child: const Text('Add Question', style: TextStyle(fontSize: 16)),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            // Question List
             Expanded(
               child: ListView.builder(
                 itemCount: _questions.length,
@@ -130,18 +171,25 @@ class _EditQuizPageState extends State<EditQuizPage> {
                 },
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            // Save Changes Button
             ElevatedButton(
               onPressed: _saveQuiz,
-              child: const Text('Save Changes'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF4CAF50),
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+              ),
+              child: const Text('Save Changes', style: TextStyle(fontSize: 16)),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
+            // View Scores Button
             ElevatedButton(
               onPressed: _viewScores,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
               ),
-              child: const Text('Lihat Nilai'),
+              child: const Text('View Scores', style: TextStyle(fontSize: 16)),
             ),
           ],
         ),
@@ -149,25 +197,40 @@ class _EditQuizPageState extends State<EditQuizPage> {
     );
   }
 
+  // Question Form Builder
   Widget _buildQuestionForm(int questionIndex) {
     final question = _questions[questionIndex];
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Question ${questionIndex + 1}',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Question ${questionIndex + 1}',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                IconButton(
+                  icon: Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => _deleteQuestion(questionIndex),
+                ),
+              ],
             ),
             const SizedBox(height: 10),
+            // Question Text Field
             TextFormField(
               decoration: InputDecoration(
                 labelText: 'Question Text',
                 border: OutlineInputBorder(),
                 contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                filled: true,
+                fillColor: Colors.grey[200], // Light grey background
               ),
               onChanged: (value) {
                 setState(() {
@@ -177,6 +240,7 @@ class _EditQuizPageState extends State<EditQuizPage> {
               initialValue: question['question'],
             ),
             const SizedBox(height: 10),
+            // Options List
             for (int i = 0; i < (question['options']?.length ?? 0); i++)
               Padding(
                 padding: const EdgeInsets.only(bottom: 10.0),
@@ -188,6 +252,8 @@ class _EditQuizPageState extends State<EditQuizPage> {
                           labelText: 'Option ${i + 1}',
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                          filled: true,
+                          fillColor: Colors.grey[200],
                         ),
                         onChanged: (value) {
                           _questions[questionIndex]['options'][i] = value;
@@ -206,6 +272,7 @@ class _EditQuizPageState extends State<EditQuizPage> {
                   ],
                 ),
               ),
+            // Add Option Button
             ElevatedButton(
               onPressed: () {
                 setState(() {
@@ -215,9 +282,13 @@ class _EditQuizPageState extends State<EditQuizPage> {
                   ];
                 });
               },
-              child: const Text('Add Option'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orangeAccent,
+              ),
+              child: const Text('Add Option', style: TextStyle(fontSize: 16)),
             ),
             const SizedBox(height: 10),
+            // Correct Answer Dropdown
             DropdownButtonFormField<int>(
               decoration: InputDecoration(
                 labelText: 'Correct Answer Index',
@@ -243,5 +314,3 @@ class _EditQuizPageState extends State<EditQuizPage> {
     );
   }
 }
-
-
