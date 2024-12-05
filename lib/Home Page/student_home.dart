@@ -14,167 +14,247 @@ class StudentHomePage extends StatefulWidget {
 
 class _StudentHomePageState extends State<StudentHomePage> {
   int _currentIndex = 0;
+  String searchQuery = "";
+  bool isSearching = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Student Dashboard'),
-        backgroundColor: Colors.blueAccent,
-        elevation: 4.0,
-      ),
-      body: _currentIndex == 0
-          ? FutureBuilder<Map<String, dynamic>>(
-        future: _fetchCompletedQuizzesWithScores(widget.username),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return Center(
-                child: Text(
-                  'Error fetching quizzes',
-                  style: TextStyle(color: Colors.red),
-                ));
-          }
-
-          Map<String, dynamic> completedQuizzes =
-              snapshot.data ?? {}; // Map of quizId to score
-
-          return StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('quizzes')
-                .snapshots(),
-            builder: (context, quizSnapshot) {
-              if (!quizSnapshot.hasData) {
-                return Center(child: CircularProgressIndicator());
-              }
-
-              final quizzes = quizSnapshot.data!.docs;
-
-              return Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ListView(
-                  children: quizzes.map((document) {
-                    final quizName =
-                        document['quizName'] ?? 'Unnamed Quiz';
-                    final quizId = document.id;
-
-                    bool isCompleted =
-                    completedQuizzes.containsKey(quizId);
-                    String? score = isCompleted
-                        ? completedQuizzes[quizId].toString()
-                        : null;
-
-                    return Card(
-                      elevation: 5.0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0),
+      appBar: _currentIndex == 0
+          ? AppBar(
+              title: isSearching
+                  ? TextField(
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        hintText: 'Search quizzes...',
+                        border: InputBorder.none,
                       ),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: isCompleted
-                              ? Colors.green
-                              : Colors.blueAccent,
-                          child: Icon(
-                            isCompleted
-                                ? Icons.check_circle
-                                : Icons.quiz,
-                            color: Colors.white,
-                          ),
-                        ),
-                        title: Text(
-                          quizName,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        subtitle: isCompleted
-                            ? Text(
-                          'Score: $score',
-                          style: TextStyle(
-                              color: Colors.green,
-                              fontStyle: FontStyle.italic),
-                        )
-                            : Text(
-                          'Not Attempted',
-                          style: TextStyle(
-                              color: Colors.grey,
-                              fontStyle: FontStyle.italic),
-                        ),
-                        trailing: isCompleted
-                            ? null
-                            : ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                              BorderRadius.circular(10.0),
-                            ),
-                            backgroundColor: Colors.blueAccent,
-                          ),
-                          onPressed: () async {
-                            final startQuiz =
-                            await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: Text('Confirmation'),
-                                content: Text(
-                                    'Are you sure you want to start this quiz?'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(
-                                          context, false);
-                                    },
-                                    child: Text('Cancel'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(
-                                          context, true);
-                                    },
-                                    child: Text('Start'),
-                                  ),
-                                ],
-                              ),
-                            );
+                      style: TextStyle(color: Colors.white),
+                      onChanged: (value) {
+                        setState(() {
+                          searchQuery = value;
+                        });
+                      },
+                    )
+                  : Text('JustQuiz'),
+              backgroundColor: Colors.teal.shade400,
+              actions: [
+                IconButton(
+                  icon: Icon(isSearching ? Icons.close : Icons.search),
+                  onPressed: () {
+                    setState(() {
+                      if (isSearching) {
+                        isSearching = false;
+                        searchQuery = "";
+                      } else {
+                        isSearching = true;
+                      }
+                    });
+                  },
+                ),
+              ],
+            )
+          : null,
+      body: AnimatedSwitcher(
+        duration: Duration(milliseconds: 500),
+        child: _currentIndex == 0
+            ? FutureBuilder<Map<String, dynamic>>(
+                future: _fetchCompletedQuizzesWithScores(widget.username),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
 
-                            if (startQuiz == true) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      QuizViewPage(
-                                        quizId: quizId,
-                                        username:
-                                        widget.username,
-                                      ),
-                                ),
-                              ).then((_) {
-                                setState(() {});
-                              });
-                            }
-                          },
-                          child: Text(
-                            'Take Quiz',
-                            style: TextStyle(
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Error fetching quizzes',
+                        style: TextStyle(color: Colors.red),
                       ),
                     );
-                  }).toList(),
-                ),
-              );
-            },
-          );
-        },
-      )
-          : AccountStudentPage(username: widget.username),
+                  }
+
+                  Map<String, dynamic> completedQuizzes = snapshot.data ?? {};
+
+                  return StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('quizzes')
+                        .snapshots(),
+                    builder: (context, quizSnapshot) {
+                      if (!quizSnapshot.hasData) {
+                        return Center(child: CircularProgressIndicator());
+                      }
+
+                      final quizzes = quizSnapshot.data!.docs
+                          .where((quiz) =>
+                              quiz['quizName']
+                                  ?.toLowerCase()
+                                  .contains(searchQuery.toLowerCase()) ??
+                              true)
+                          .toList();
+
+                      return Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: ListView.builder(
+                          itemCount: quizzes.length,
+                          itemBuilder: (context, index) {
+                            final document = quizzes[index];
+                            final quizName =
+                                document['quizName'] ?? 'Unnamed Quiz';
+                            final quizId = document.id;
+
+                            bool isCompleted =
+                                completedQuizzes.containsKey(quizId);
+                            String? score = isCompleted
+                                ? completedQuizzes[quizId].toString()
+                                : null;
+
+                            return Card(
+                              margin: const EdgeInsets.symmetric(
+                                  vertical: 8.0, horizontal: 12.0),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16.0),
+                              ),
+                              elevation: 4.0,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: isCompleted
+                                        ? [
+                                            Colors.green.shade100,
+                                            Colors.green.shade300
+                                          ]
+                                        : [
+                                            Colors.teal.shade50,
+                                            Colors.teal.shade100
+                                          ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(16.0),
+                                ),
+                                child: ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor: isCompleted
+                                        ? Colors.green.shade400
+                                        : Colors.teal.shade400,
+                                    child: Icon(
+                                      isCompleted
+                                          ? Icons.check_circle_rounded
+                                          : Icons.quiz_rounded,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  title: Text(
+                                    quizName,
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF3C3C3C),
+                                    ),
+                                  ),
+                                  subtitle: isCompleted
+                                      ? Text(
+                                          'Score : ${score != null ? (double.tryParse(score) ?? 0).toInt() : 0}',
+
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey.shade700,
+                                          ),
+                                        )
+                                      : Text(
+                                          'Not Attempted',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey.shade600,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                  trailing: AnimatedSwitcher(
+                                    duration: Duration(milliseconds: 300),
+                                    child: isCompleted
+                                        ? Icon(
+                                            Icons.done,
+                                            color: Colors.white,
+                                            size: 28,
+                                          )
+                                        : ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12.0),
+                                              ),
+                                              backgroundColor:
+                                                  Colors.teal.shade400,
+                                              elevation: 3,
+                                              padding: EdgeInsets.symmetric(
+                                                  horizontal: 16.0,
+                                                  vertical: 8.0),
+                                            ),
+                                            onPressed: () async {
+                                              final startQuiz =
+                                                  await showDialog<bool>(
+                                                context: context,
+                                                builder: (context) =>
+                                                    AlertDialog(
+                                                  title: Text('Confirmation'),
+                                                  content: Text(
+                                                      'Are you sure you want to start this quiz?'),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        Navigator.pop(
+                                                            context, false);
+                                                      },
+                                                      child: Text('Cancel'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        Navigator.pop(
+                                                            context, true);
+                                                      },
+                                                      child: Text('Start'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+
+                                              if (startQuiz == true) {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        QuizViewPage(
+                                                      quizId: quizId,
+                                                      username: widget.username,
+                                                    ),
+                                                  ),
+                                                ).then((_) {
+                                                  setState(() {});
+                                                });
+                                              }
+                                            },
+                                            child: Text(
+                                              'Take Quiz',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  );
+                },
+              )
+            : AccountStudentPage(username: widget.username),
+      ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -187,9 +267,9 @@ class _StudentHomePageState extends State<StudentHomePage> {
           ),
         ],
         currentIndex: _currentIndex,
-        selectedItemColor: Colors.blueAccent,
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: false,
+        selectedItemColor: Colors.teal.shade400,
+        unselectedItemColor: Colors.grey.shade600,
+        backgroundColor: Colors.white,
         onTap: (int index) {
           setState(() {
             _currentIndex = index;
@@ -207,10 +287,8 @@ class _StudentHomePageState extends State<StudentHomePage> {
           .where('username', isEqualTo: username)
           .get();
 
-      // Extract Quiz IDs and scores from submissions
       Map<String, dynamic> completedQuizzes = {
-        for (var doc in submissions.docs)
-          doc['quizId']: doc['score'] // quizId: score
+        for (var doc in submissions.docs) doc['quizId']: doc['score']
       };
 
       return completedQuizzes;
