@@ -104,54 +104,7 @@ class _QuizViewPageState extends State<QuizViewPage> {
   }
 
   void _timeUp() async {
-    int correctAnswersCount = 0;
-
-    for (var question in questions) {
-      final correctAnswer = question['options'][question['correctAnswerIndex']];
-      if (answers[question['question']] == correctAnswer) {
-        correctAnswersCount++;
-      }
-    }
-
-    final score = (correctAnswersCount / questions.length) * 100;
-    final submissionDocId = '${widget.username}_${widget.quizId}';
-
-    try {
-      await FirebaseFirestore.instance
-          .collection('submissions')
-          .doc(submissionDocId)
-          .set({
-        'quizId': widget.quizId,
-        'studentAnswers': answers,
-        'score': score,
-        'timestamp': FieldValue.serverTimestamp(),
-        'username': widget.username,
-      });
-
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (context) => StudentHomePage(username: widget.username),
-        ),
-        (route) => false,
-      );
-    } catch (e) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Submission Failed'),
-          content: Text('An error occurred: $e'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text('OK'),
-            ),
-          ],
-        ),
-      );
-    }
+    _submitQuiz();
   }
 
   @override
@@ -172,13 +125,16 @@ class _QuizViewPageState extends State<QuizViewPage> {
       );
     }
 
-    final questionsPerPage = 5;
+    final questionsPerPage = 3;
     final totalPages = (questions.length / questionsPerPage).ceil();
 
     final startIndex = currentQuestionIndex * questionsPerPage;
-    final endIndex = (startIndex + questionsPerPage).clamp(0, questions.length);
+    final endIndex = ((currentQuestionIndex + 1) * questionsPerPage)
+        .clamp(0, questions.length);
 
-    final currentQuestions = questions.sublist(startIndex, endIndex);
+    final currentQuestions = startIndex < questions.length
+        ? questions.sublist(startIndex, endIndex)
+        : [];
 
     return Scaffold(
       appBar: AppBar(
@@ -203,53 +159,65 @@ class _QuizViewPageState extends State<QuizViewPage> {
       body: ListView.builder(
         itemCount: currentQuestions.length,
         itemBuilder: (context, index) {
-          final questionIndex = startIndex + index;
-          return _buildQuestionCard(currentQuestions[index], questionIndex);
+          return _buildQuestionCard(currentQuestions[index],
+              startIndex + index); // Ensure correct question numbering
         },
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            if (allowBack && currentQuestionIndex > 0)
-              ElevatedButton.icon(
-                onPressed: () {
-                  setState(() {
-                    currentQuestionIndex--;
-                  });
-                },
-                icon: Icon(Icons.arrow_back),
-                label: Text('Previous'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal.shade300,
-                ),
+            Text(
+              'Page ${currentQuestionIndex + 1} of $totalPages',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.teal.shade700,
               ),
-            if (currentQuestionIndex < totalPages - 1)
-              ElevatedButton.icon(
-                onPressed: () {
-                  setState(() {
-                    currentQuestionIndex++;
-                  });
-                },
-                icon: Icon(Icons.arrow_forward),
-                label: Text('Next'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal.shade300,
-                ),
-              ),
-            if (currentQuestionIndex == totalPages - 1)
-              ElevatedButton.icon(
-                onPressed: () {
-                  _timer.cancel();
-                  _submitQuiz();
-                },
-                icon: Icon(Icons.check),
-                label: Text('Submit'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal.shade600,
-                ),
-              ),
+            ),
+            Row(
+              mainAxisAlignment: allowBack
+                  ? MainAxisAlignment.spaceBetween
+                  : MainAxisAlignment.end,
+              children: [
+                if (allowBack && currentQuestionIndex > 0)
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        currentQuestionIndex--;
+                      });
+                    },
+                    icon: Icon(Icons.arrow_back),
+                    label: Text('Previous'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal.shade300,
+                    ),
+                  ),
+                if (currentQuestionIndex < totalPages - 1)
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        currentQuestionIndex++;
+                      });
+                    },
+                    icon: Icon(Icons.arrow_forward),
+                    label: Text('Next'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal.shade300,
+                    ),
+                  ),
+                if (currentQuestionIndex == totalPages - 1)
+                  ElevatedButton.icon(
+                    onPressed: _submitQuiz,
+                    icon: Icon(Icons.check),
+                    label: Text('Submit'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal.shade600,
+                    ),
+                  ),
+              ],
+            ),
           ],
         ),
       ),
@@ -305,7 +273,7 @@ class _QuizViewPageState extends State<QuizViewPage> {
                 },
                 icon: Icon(Icons.clear, color: Colors.red),
                 label:
-                    Text('Clear Answer', style: TextStyle(color: Colors.red)),
+                Text('Clear Answer', style: TextStyle(color: Colors.red)),
               ),
             ),
           ],
@@ -358,7 +326,7 @@ class _QuizViewPageState extends State<QuizViewPage> {
                   MaterialPageRoute(
                       builder: (context) =>
                           StudentHomePage(username: widget.username)),
-                  (route) => false,
+                      (route) => false,
                 );
               },
               child: Text('OK'),
@@ -367,19 +335,11 @@ class _QuizViewPageState extends State<QuizViewPage> {
         ),
       );
     } catch (e) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Submission Failed'),
-          content: Text('An error occurred: $e'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text('OK'),
-            ),
-          ],
+      print('Error submitting quiz: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error submitting quiz. Please try again.'),
+          backgroundColor: Colors.red,
         ),
       );
     }
